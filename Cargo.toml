@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/ledger",
+  "crates/rule-engine",
+  "crates/formula-engine",
+  "crates/crypto",
+  "crates/scheduler",
+  "crates/serializer",
+  "crates/query-planner",
+  "crates/permissions",
+  "crates/bindings"
+]
