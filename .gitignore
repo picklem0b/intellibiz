@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+target/
+*.rs.bk
+Cargo.lock
+*.node
+.DS_Store
+coverage/
