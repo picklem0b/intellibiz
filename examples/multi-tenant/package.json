@@ -1,0 +1,8 @@
+{
+  "name": "@intellibiz-examples/multi-tenant",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": { "dev": "tsx src/index.ts" },
+  "dependencies": { "intellibiz": "workspace:*" },
+  "devDependencies": { "tsx": "^4.0.0" }
+}

@@ -9,3 +9,9 @@ crate-type = ["cdylib"]
 [dependencies]
 napi = { version = "2", features = ["async"] }
 napi-derive = "2"
+intellibiz-ledger = { path = "../ledger" }
+intellibiz-rule-engine = { path = "../rule-engine" }
+intellibiz-formula-engine = { path = "../formula-engine" }
+intellibiz-crypto = { path = "../crypto" }
+intellibiz-query-planner = { path = "../query-planner" }
+intellibiz-permissions = { path = "../permissions" }
