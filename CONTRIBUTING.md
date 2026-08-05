@@ -1,15 +1,15 @@
-# Contributing to Intellibiz
+# Contributing
 
 ## Commit Convention
 
 ```
-(feat): add ledger atomic commit
-(fix): correct vat rounding in formula engine
-(refactor): query-planner tenant filter logic
-(chore): update pnpm lockfile
-(docs): update agent.md
-(test): add permission engine unit tests
-(build): configure turbo pipeline
+(feat): add feature
+(fix): fix bug
+(refactor): restructure code
+(chore): tooling or config
+(docs): documentation
+(test): tests
+(build): build pipeline
 ```
 
 ## Branches
@@ -17,6 +17,4 @@
 - `main` — stable
 - `dev` — active development
 
-## Pull Requests
-
-Open PRs against `dev`. Never directly to `main`.
+PRs go to `dev` only.
