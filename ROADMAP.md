@@ -96,13 +96,13 @@ packages/core/native/src/
 
 GitHub Actions workflow (`.github/workflows/native-build.yml`) compiling `.node` binaries across all platforms:
 
-| Target Triple               | Platform                    |
-| --------------------------- | --------------------------- |
-| `x86_64-unknown-linux-gnu`  | Linux x64                   |
-| `aarch64-unknown-linux-gnu` | Linux ARM64 / AWS Graviton  |
-| `x86_64-apple-darwin`       | macOS x64 / Intel           |
-| `aarch64-apple-darwin`      | macOS ARM64 / Apple Silicon |
-| `x86_64-pc-windows-msvc`    | Windows x64                 |
+| Target Triple | Platform |
+|---|---|
+| `x86_64-unknown-linux-gnu` | Linux x64 |
+| `aarch64-unknown-linux-gnu` | Linux ARM64 / AWS Graviton |
+| `x86_64-apple-darwin` | macOS x64 / Intel |
+| `aarch64-apple-darwin` | macOS ARM64 / Apple Silicon |
+| `x86_64-pc-windows-msvc` | Windows x64 |
 
 Pre-compiled binaries are published as platform-specific optional npm packages. Developers do not need Rust installed.
 
@@ -114,32 +114,12 @@ Dual CJS/ESM export map in `packages/intellibiz/package.json`:
 {
   "name": "intellibiz",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    },
-    "./db": { "types": "./dist/db.d.ts", "import": "./dist/db.mjs", "require": "./dist/db.js" },
-    "./finance": {
-      "types": "./dist/finance.d.ts",
-      "import": "./dist/finance.mjs",
-      "require": "./dist/finance.js"
-    },
-    "./commerce": {
-      "types": "./dist/commerce.d.ts",
-      "import": "./dist/commerce.mjs",
-      "require": "./dist/commerce.js"
-    },
-    "./identity": {
-      "types": "./dist/identity.d.ts",
-      "import": "./dist/identity.mjs",
-      "require": "./dist/identity.js"
-    },
-    "./config": {
-      "types": "./dist/config.d.ts",
-      "import": "./dist/config.mjs",
-      "require": "./dist/config.js"
-    }
+    ".":         { "types": "./dist/index.d.ts",    "import": "./dist/index.mjs",    "require": "./dist/index.js" },
+    "./db":      { "types": "./dist/db.d.ts",       "import": "./dist/db.mjs",       "require": "./dist/db.js" },
+    "./finance": { "types": "./dist/finance.d.ts",  "import": "./dist/finance.mjs",  "require": "./dist/finance.js" },
+    "./commerce":{ "types": "./dist/commerce.d.ts", "import": "./dist/commerce.mjs", "require": "./dist/commerce.js" },
+    "./identity":{ "types": "./dist/identity.d.ts", "import": "./dist/identity.mjs", "require": "./dist/identity.js" },
+    "./config":  { "types": "./dist/config.d.ts",   "import": "./dist/config.mjs",   "require": "./dist/config.js" }
   }
 }
 ```
@@ -154,16 +134,15 @@ Dual CJS/ESM export map in `packages/intellibiz/package.json`:
 
 ```typescript
 export interface IntellibizStore {
-  readonly traceId: string // 'ibiz_trc_9918ab21cd'
+  readonly traceId: string  // 'ibiz_trc_9918ab21cd'
   tenantId?: string
   userId?: string
-  readonly startTime: bigint // process.hrtime.bigint()
+  readonly startTime: bigint  // process.hrtime.bigint()
   readonly origin: 'http' | 'queue' | 'cron' | 'cli' | 'socket'
 }
 ```
 
 **Core functions:**
-
 - `createTraceId()` — High-entropy lexically sortable ID using `crypto.randomBytes`
 - `runInContext<T>(store, fn)` — Wraps execution in ALS store
 - `getContext()` — Returns current store or throws `ContextMissingError`
@@ -172,14 +151,14 @@ export interface IntellibizStore {
 
 **File:** `packages/core/src/context/specialized/`
 
-| Context              | Extends store with                                          |
-| -------------------- | ----------------------------------------------------------- |
-| `RequestContext`     | `body`, `params`, `query`, `headers`, `ip`, `method`, `url` |
-| `ActionContext`      | `data`, `origin`, `result`                                  |
-| `EventContext`       | `name`, `payload`, `source`, `timestamp`                    |
-| `JobContext`         | `id`, `queue`, `attempt`, `retry(delay)`, `fail(reason)`    |
-| `TaskContext`        | `runId`, `schedule`, `nextRun`                              |
-| `ApplicationContext` | `plugins`, `http`, `scheduler`, `queue`                     |
+| Context | Extends store with |
+|---------|-------------------|
+| `RequestContext` | `body`, `params`, `query`, `headers`, `ip`, `method`, `url` |
+| `ActionContext` | `data`, `origin`, `result` |
+| `EventContext` | `name`, `payload`, `source`, `timestamp` |
+| `JobContext` | `id`, `queue`, `attempt`, `retry(delay)`, `fail(reason)` |
+| `TaskContext` | `runId`, `schedule`, `nextRun` |
+| `ApplicationContext` | `plugins`, `http`, `scheduler`, `queue` |
 
 All contexts automatically attach proxies for `db`, `log`, `ledger`, `money`, `tax`, `auth`, and `emit()` from the ALS store.
 
@@ -250,7 +229,10 @@ Each block's hash includes the previous block's hash — making retroactive modi
 import { getContext } from '@intellibiz/core'
 import { executeQuery } from '../driver/pool'
 
-export async function sql(strings: TemplateStringsArray, ...values: unknown[]): Promise<unknown[]> {
+export async function sql(
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): Promise<unknown[]> {
   const ctx = getContext()
   let queryText = strings[0] ?? ''
   const params: unknown[] = []
@@ -405,11 +387,11 @@ export function money(amount: number | string, currency?: string): Money {
 
 Currency decimal precision lookup for correct minor unit handling:
 
-| Currency           | Decimals | Example     |
-| ------------------ | -------- | ----------- |
-| USD, EUR, ZAR, GBP | 2        | `$10.99`    |
-| JPY, KRW           | 0        | `¥1099`     |
-| BHD, KWD           | 3        | `1.099 BHD` |
+| Currency | Decimals | Example |
+|----------|----------|---------|
+| USD, EUR, ZAR, GBP | 2 | `$10.99` |
+| JPY, KRW | 0 | `¥1099` |
+| BHD, KWD | 3 | `1.099 BHD` |
 
 ### 3.4 Regional VAT/GST Tax Calculator
 
@@ -424,7 +406,6 @@ export async function calculateTotal(params: {
 ```
 
 Tax rates are resolved in this order:
-
 1. Explicit `taxRate` parameter
 2. Override file (`intellibiz/tax-rules.ts`) if `overrides.taxCalculation: true`
 3. Internal regional rate table (VAT by EU country, GST by region)
@@ -458,9 +439,9 @@ If no tenant resolves and `tenancy.strict: true` → `StrictTenancyViolationErro
 **File:** `packages/identity/src/index.ts`
 
 ```typescript
-identity.getActiveUser() // → { id, email, roles } from ALS context
-identity.getActiveTenant() // → { id, slug, config } from ALS context
-identity.can(permission) // → boolean via Rust bitmask engine
+identity.getActiveUser()    // → { id, email, roles } from ALS context
+identity.getActiveTenant()  // → { id, slug, config } from ALS context
+identity.can(permission)    // → boolean via Rust bitmask engine
 identity.deleteUser(id, options) // → GDPR cascading purge
 ```
 
@@ -488,7 +469,6 @@ export interface ChargeResult {
 ```
 
 **V1 Built-in Adapters:**
-
 - `StripeProvider` — `packages/commerce/src/providers/stripe.ts`
 - `PayFastOzowProvider` — `packages/commerce/src/providers/payfast-ozow.ts` (Instant EFT for South Africa)
 
@@ -549,12 +529,12 @@ Each `tx.*` call registers its compensating action before executing. On any fail
 **File:** `packages/testing/src/`
 
 ```typescript
-test.advanceTime('30d') // Virtual clock progression
-test.mockGateway('stripe', responses) // Intercept payment adapter network calls
-test.withTenant(tenantId, fn) // Set ALS tenant for test duration
-test.assertLedgerEntry(filter) // Assert presence of ledger blocks
+test.advanceTime('30d')                      // Virtual clock progression
+test.mockGateway('stripe', responses)        // Intercept payment adapter network calls
+test.withTenant(tenantId, fn)                // Set ALS tenant for test duration
+test.assertLedgerEntry(filter)               // Assert presence of ledger blocks
 mockPayments.failNext({ code: 'card_declined' }) // Force next charge to fail
-mockPayments.spyRefund() // Spy on compensating refund calls
+mockPayments.spyRefund()                     // Spy on compensating refund calls
 ```
 
 ### 6.2 E-Commerce Reference Application
@@ -562,10 +542,9 @@ mockPayments.spyRefund() // Spy on compensating refund calls
 **Location:** `examples/flagship-store/`
 
 Demonstrates:
-
 - `intellibiz.config.ts` flag configuration
 - Customer registration and tenant binding
-- Pure SQL product catalog (`sql\`SELECT \* FROM products WHERE category = ${cat}\``)
+- Pure SQL product catalog (`sql\`SELECT * FROM products WHERE category = ${cat}\``)
 - Atomic checkout via `commerce.transaction()`
 - Webhook callback processing for Stripe and PayFast/Ozow EFT events
 - Multi-tenancy isolation verification
@@ -582,18 +561,18 @@ Demonstrates:
 
 After V1 ships **The Shippable Five**, these packages form the V2 roadmap:
 
-| Package                  | Capability                                             |
-| ------------------------ | ------------------------------------------------------ |
+| Package | Capability |
+|---------|-----------|
 | `@intellibiz/governance` | Full audit dashboard, P&L reports, ledger verification |
-| `@intellibiz/legal`      | EULA signatures, GDPR cascading purge, license keys    |
-| `@intellibiz/inventory`  | SKU management, warehouse, stock reservation           |
-| `@intellibiz/queue`      | Background job queue, retry policies                   |
-| `@intellibiz/scheduler`  | Cron jobs, TaskContext, timer wheels                   |
-| `@intellibiz/mail`       | Transactional email with provider adapters             |
-| `@intellibiz/growth`     | Referrals, coupons, A/B testing, affiliate tracking    |
-| `@intellibiz/metrics`    | Prometheus, OpenTelemetry, health checks               |
-| `@intellibiz/ai`         | AI provider adapters (OpenAI, Anthropic)               |
-| `@intellibiz/plugin-*`   | Stripe, Redis, S3, PostgreSQL, OpenAI plugin packages  |
+| `@intellibiz/legal` | EULA signatures, GDPR cascading purge, license keys |
+| `@intellibiz/inventory` | SKU management, warehouse, stock reservation |
+| `@intellibiz/queue` | Background job queue, retry policies |
+| `@intellibiz/scheduler` | Cron jobs, TaskContext, timer wheels |
+| `@intellibiz/mail` | Transactional email with provider adapters |
+| `@intellibiz/growth` | Referrals, coupons, A/B testing, affiliate tracking |
+| `@intellibiz/metrics` | Prometheus, OpenTelemetry, health checks |
+| `@intellibiz/ai` | AI provider adapters (OpenAI, Anthropic) |
+| `@intellibiz/plugin-*` | Stripe, Redis, S3, PostgreSQL, OpenAI plugin packages |
 
 ---
 
@@ -613,4 +592,4 @@ Each phase depends on the previous. `@intellibiz/core` must be built and tested 
 
 ---
 
-_Apache License 2.0 — Copyright 2025 Intellibiz_
+*Apache License 2.0 — Copyright 2025 Intellibiz*
