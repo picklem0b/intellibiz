@@ -42,13 +42,13 @@ interface LedgerEntry {
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `action` | `string` | Filter by event type (e.g. `'payment.charge'`) |
+| `action` | `string` | Filter by event type |
 | `tenantId` | `string` | Filter by tenant |
 | `userId` | `string` | Filter by user |
-| `traceId` | `string` | Filter by trace ID — returns entire trace chain |
+| `traceId` | `string` | Filter by trace ID |
 | `from` | `Date` | Start of date range |
 | `to` | `Date` | End of date range |
-| `status` | `LedgerEntryStatus` | Filter by entry status |
+| `status` | `'COMMITTED' \| 'PENDING' \| 'MANUAL_REVIEW'` | Filter by status |
 
 ---
 

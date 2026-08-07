@@ -1,10 +1,16 @@
 # `@intellibiz/http` API Reference
 
-Hono-powered HTTP router that binds `RequestContext` to handlers, infers responses from return values, and applies tenancy and auth via config flags — not middleware registration.
+Hono-powered HTTP router binding `RequestContext` to handlers.
 
 ---
 
-## Route Registration
+## `http.get(path, options?, handler)`
+## `http.post(path, options?, handler)`
+## `http.put(path, options?, handler)`
+## `http.patch(path, options?, handler)`
+## `http.delete(path, options?, handler)`
+
+Registers an HTTP endpoint. The handler receives a `RequestContext` with tenant, user, and injected services automatically populated.
 
 ```typescript
 import { http } from 'intellibiz'

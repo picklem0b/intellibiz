@@ -1,6 +1,7 @@
 {
+<<<<<<< HEAD
   "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
+  "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
@@ -14,4 +15,21 @@
     },
     "lint": {}
   }
+=======
+    "$schema": "https://turbo.build/schema.json",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "outputs": ["dist/**"]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "test": {
+            "dependsOn": ["^build"]
+        },
+        "lint": {}
+    }
+>>>>>>> c55b8a4 ((docs): add all 10 RFCs with full professional structure and fix turbo v2 pipeline and package versions)
 }

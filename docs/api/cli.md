@@ -29,6 +29,7 @@ Production validation enforces:
 - `environment.dryRun` must be `false`
 - `ledger.mode` must be `'atomic'`
 - All `sync` targets in `ledger.sync` must have their dependency blocks present
+Bundles the project for production via `tsup`. Validates config against the production Zod schema — `dryRun` must be `false`.
 
 ```bash
 npx intellibiz build
@@ -116,18 +117,15 @@ Scans the Rust ledger and governance store for compliance issues. Outputs a stru
 ```bash
 npx intellibiz audit
 npx intellibiz audit --start-date 2025-01-01
-npx intellibiz audit --end-date 2025-12-31
 npx intellibiz audit --tenant ten_abc123
 npx intellibiz audit --transaction-id txn_xyz
-npx intellibiz audit --json                    # machine-readable output for CI
 ```
 
-Report includes:
+Output includes:
 - Transactions in `PENDING` state older than configured threshold
-- `GOVERNANCE_SUDO_ACCESS` entries for human review
-- `GOVERNANCE_RAW_QUERY` warnings
+- `SUDO_BYPASS` entries for manual review
+- `RAW_QUERY` warnings
 - Failed compensating actions in `MANUAL_REVIEW` state
-- `PENDING_BANK_RECONCILIATION` entries still awaiting bank settlement
 
 ---
 
@@ -150,7 +148,7 @@ npx intellibiz import sql --connection postgres://... --table legacy_orders
 
 ## `npx intellibiz config --validate`
 
-Validates `intellibiz.config.ts` and prints the fully resolved config with all defaults applied and flag dependencies checked. Use before deploying.
+Validates `intellibiz.config.ts` and prints the fully resolved config with all defaults applied. Useful for verifying config before deploying.
 
 ```bash
 npx intellibiz config --validate
