@@ -269,7 +269,7 @@ echo "[edit] Trimming V2 dependencies from packages/intellibiz/package.json..."
 cat > "$ROOT/packages/intellibiz/package.json" << 'EOF'
 {
   "name": "intellibiz",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

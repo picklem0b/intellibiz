@@ -1,6 +1,6 @@
 {
 	"name": "@intellibiz/identity",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"private": false,
 	"description": "Intellibiz identity — RBAC, tenant resolution, JWT, user context",
 	"main": "./dist/index.cjs",

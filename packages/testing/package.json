@@ -1,6 +1,6 @@
 {
 	"name": "@intellibiz/testing",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"private": false,
 	"description": "Intellibiz testing utilities — time travel, mock gateway, tenant context, ledger assertions",
 	"main": "./dist/index.cjs",

@@ -1,6 +1,6 @@
 {
 	"name": "@intellibiz/commerce",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"private": false,
 	"description": "Intellibiz commerce — payment providers, WAL transactions, webhook dedup, bank retry state machine",
 	"main": "./dist/index.cjs",

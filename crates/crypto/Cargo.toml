@@ -1,9 +1,13 @@
 [package]
-name = "intellibiz-crypto"
-version = "0.1.0"
+name    = "intellibiz-crypto"
+version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-sha2 = { workspace = true }
-hmac = { workspace = true }
-thiserror = { workspace = true }
+hex           = { workspace = true }
+sha2          = { workspace = true }
+ed25519-dalek = { workspace = true }
+aes-gcm       = { workspace = true }
+argon2        = { workspace = true }
+thiserror     = { workspace = true }
+serde         = { workspace = true }

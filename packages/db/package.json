@@ -1,6 +1,6 @@
 {
 	"name": "@intellibiz/db",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"private": false,
 	"description": "Intellibiz database layer — sql tagged templates, Kysely proxy, tenant query planner",
 	"main": "./dist/index.cjs",

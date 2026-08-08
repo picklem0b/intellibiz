@@ -1,6 +1,6 @@
 {
 	"name": "intellibiz",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"private": false,
 	"description": "Intellibiz — Business Application Engine. The public face of the V1 framework.",
 	"main": "./dist/index.cjs",

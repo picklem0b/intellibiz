@@ -1,8 +1,8 @@
 [package]
-name = "intellibiz-permissions"
+name    = "intellibiz-permissions"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-serde = { workspace = true }
+serde     = { workspace = true }
 thiserror = { workspace = true }

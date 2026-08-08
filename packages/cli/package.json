@@ -1,6 +1,6 @@
 {
 	"name": "@intellibiz/cli",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"private": false,
 	"description": "Intellibiz CLI — dev server, build, audit, dashboard commands",
 	"main": "./dist/index.cjs",
