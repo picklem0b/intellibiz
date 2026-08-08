@@ -7,11 +7,18 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-napi = { version = "2", features = ["async"] }
-napi-derive = "2"
+napi = { workspace = true }
+napi-derive = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 intellibiz-ledger = { path = "../ledger" }
 intellibiz-rule-engine = { path = "../rule-engine" }
 intellibiz-formula-engine = { path = "../formula-engine" }
 intellibiz-crypto = { path = "../crypto" }
 intellibiz-query-planner = { path = "../query-planner" }
 intellibiz-permissions = { path = "../permissions" }
+intellibiz-scheduler = { path = "../scheduler" }
+intellibiz-serializer = { path = "../serializer" }
+
+[build-dependencies]
+napi-build = "2"

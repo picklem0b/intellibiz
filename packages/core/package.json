@@ -1,18 +1,37 @@
 {
-  "name": "@intellibiz/core",
-  "version": "0.1.0",
-  "private": false,
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
-    "test": "echo \"no tests yet\""
-  }
+	"name": "@intellibiz/core",
+	"version": "0.1.0",
+	"private": false,
+	"description": "Intellibiz kernel — ALS context, defineAction, defineConfig, definePlugin",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"files": ["dist", "*.node"],
+	"scripts": {
+		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
+		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit",
+		"lint": "tsc --noEmit",
+		"clean": "rm -rf dist"
+	},
+	"dependencies": {
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"tsdown": "^0.22.14",
+		"typescript": "^7.0.2",
+		"vitest": "^4.1.10"
+	},
+	"peerDependencies": {
+		"typescript": ">=5.0.0"
+	}
 }
