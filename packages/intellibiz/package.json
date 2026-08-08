@@ -21,14 +21,6 @@
       "import": "./dist/identity.js",
       "require": "./dist/identity.cjs"
     },
-    "./legal": {
-      "import": "./dist/legal.js",
-      "require": "./dist/legal.cjs"
-    },
-    "./inventory": {
-      "import": "./dist/inventory.js",
-      "require": "./dist/inventory.cjs"
-    },
     "./config": {
       "import": "./dist/config.js",
       "require": "./dist/config.cjs"
@@ -41,12 +33,10 @@
   },
   "dependencies": {
     "@intellibiz/core": "workspace:*",
+    "@intellibiz/db": "workspace:*",
     "@intellibiz/finance": "workspace:*",
     "@intellibiz/commerce": "workspace:*",
     "@intellibiz/identity": "workspace:*",
-    "@intellibiz/legal": "workspace:*",
-    "@intellibiz/governance": "workspace:*",
-    "@intellibiz/inventory": "workspace:*",
     "@intellibiz/http": "workspace:*"
   }
 }
