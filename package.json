@@ -4,20 +4,26 @@
     "private": true,
     "scripts": {
         "build": "turbo run build",
+        "build:rust": "cargo build --release --manifest-path Cargo.toml",
         "dev": "turbo run dev",
         "test": "turbo run test",
         "lint": "turbo run lint",
-        "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+        "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+        "clean": "turbo run clean && rm -rf node_modules",
+        "typecheck": "turbo run typecheck"
     },
     "devDependencies": {
+        "@changesets/cli": "^2.27.7",
+        "@types/node": "^22.0.0",
         "prettier": "^3.9.6",
+        "tsup": "^8.5.1",
         "turbo": "^2.10.8",
-        "typescript": "^7.0.2",
-        "tsup": "^8.5.1"
+        "typescript": "^5.8.3",
+        "vitest": "^3.2.4"
     },
     "engines": {
         "node": ">=18.0.0",
         "pnpm": ">=9.0.0"
     },
-    "packageManager": "pnpm@9.0.0"
+    "packageManager": "pnpm@9.15.0"
 }
