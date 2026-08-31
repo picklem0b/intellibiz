@@ -14,5 +14,8 @@
 		"build": "tsup src/index.ts --format esm,cjs --dts",
 		"dev": "tsup src/index.ts --format esm,cjs --dts --watch",
 		"test": "echo \"no tests yet\""
-	}
+	},
+    "devDependecies": {
+        "tsup": "^latest"
+    }
 }
