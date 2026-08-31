@@ -24,8 +24,39 @@ export {
 } from './webhooks/dedup.js';
 export type { WebhookEvent } from './webhooks/dedup.js';
 
+export type {
+	BankStatus,
+	BankRetryConfig
+} from './state-machine/bank-retry.js';
+export {
+	startBankRetry,
+	isRetrying,
+	getRetryAttempt,
+	forceResolve,
+	cancelAllRetries,
+	getActiveRetries
+} from './state-machine/bank-retry.js';
+
+export type {
+	PaymentProvider as ProviderContract,
+	ChargeParams as ProviderChargeParams,
+	ChargeResult as ProviderChargeResult,
+	RefundParams as ProviderRefundParams,
+	WebhookEvent as ProviderWebhookEvent
+} from './providers/base.js';
+
+export { StripeProvider } from './providers/stripe.js';
+export type { StripeConfig } from './providers/stripe.js';
+export { PayFastProvider, OzowProvider } from './providers/payfast.js';
+export type { PayFastConfig, OzowConfig } from './providers/payfast.js';
+
+import { transaction, setPaymentProvider, getPaymentProvider } from './transaction/index.js';
+import { handleWebhook, processWebhook } from './webhooks/dedup.js';
+
 export const commerce = {
 	transaction,
+	setPaymentProvider,
+	getPaymentProvider,
 	webhooks: {
 		handle: handleWebhook,
 		process: processWebhook
@@ -45,12 +76,3 @@ export const commerce = {
 		});
 	}
 };
-
-import {
-	transaction,
-	handleWebhook,
-	processWebhook,
-	isDuplicate,
-	markProcessed,
-	clearWebhookCache
-} from './index.js';

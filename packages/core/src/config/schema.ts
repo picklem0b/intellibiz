@@ -108,7 +108,23 @@ export const EventBusSchema = z.object({
 
 // ─── Root Config Schema ───────────────────────────────────────────────────────
 
+export const InventorySchema = z.object({
+	mode: z.enum(['strict', 'lenient']).default('strict'),
+	lowStockAlert: z.number().int().nonnegative().default(5),
+	reservationTtl: z.string().default('15m')
+});
+
+export const OverridesSchema = z.object({
+	taxCalculation: z.boolean().default(false),
+	autoScaffold: z.boolean().default(true),
+	path: z.string().default('./intellibiz')
+});
+
 export const IntellibizConfigSchema = z.object({
+	/** Modules to enable — controls which packages are loaded at boot. */
+	modules: z
+		.array(z.enum(['commerce', 'finance', 'identity', 'legal', 'db', 'inventory', 'logistics']))
+		.optional(),
 	tenancy: TenancySchema.optional(),
 	auth: AuthSchema.optional(),
 	finance: FinanceSchema.optional(),
@@ -116,10 +132,17 @@ export const IntellibizConfigSchema = z.object({
 	ledger: LedgerSchema.optional(),
 	governance: GovernanceSchema.optional(),
 	database: DatabaseSchema.optional(),
+	inventory: InventorySchema.optional(),
 	environment: EnvironmentSchema.optional(),
 	eventBus: EventBusSchema.optional(),
+	taxation: z
+		.object({
+			provider: z.enum(['internal', 'external']).default('internal'),
+			defaultRate: z.number().min(0).max(1).default(0)
+		})
+		.optional(),
 	plugins: z.array(z.any()).optional(),
-	overrides: z.record(z.boolean()).optional()
+	overrides: OverridesSchema.optional()
 });
 
 export type IntellibizConfig = z.infer<typeof IntellibizConfigSchema>;
