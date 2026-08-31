@@ -1,19 +1,29 @@
-name: CI
-on:
-   push:
-      branches: [main, dev]
-   pull_request:
-      branches: [main, dev]
-jobs:
-   build:
-      runs-on: ubuntu-latest
-      steps:
-         - uses: actions/checkout@v4
-         - uses: pnpm/action-setup@v3
-         - uses: actions/setup-node@v4
-           with:
-              node-version: 22
-              cache: pnpm
-         - run: pnpm install
-         - run: pnpm build
-         - run: pnpm test
+- uses: actions/checkout@v4
+
+# Ensure Node is installed first
+- uses: actions/setup-node@v4
+  with:
+     node-version: 22
+     cache: pnpm
+
+# Then configure pnpm
+- uses: pnpm/action-setup@v3
+  with:
+     # optional: pin a pnpm version
+     version: 8
+
+# Debug: show versions (optional, helpful for CI debugging)
+- name: Show node & pnpm versions
+  run: |
+     node -v
+     pnpm -v
+
+# Install deps at workspace root (ensure workspace install in monorepo)
+- name: Install dependencies
+  run: pnpm -w install --frozen-lockfile
+
+- name: Build
+  run: pnpm -w build
+
+- name: Test
+  run: pnpm -w test
