@@ -1,52 +1,64 @@
 {
-  "name": "intellibiz",
-  "version": "0.1.0",
-  "private": false,
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./commerce": {
-      "import": "./dist/commerce.js",
-      "require": "./dist/commerce.cjs"
-    },
-    "./finance": {
-      "import": "./dist/finance.js",
-      "require": "./dist/finance.cjs"
-    },
-    "./identity": {
-      "import": "./dist/identity.js",
-      "require": "./dist/identity.cjs"
-    },
-    "./legal": {
-      "import": "./dist/legal.js",
-      "require": "./dist/legal.cjs"
-    },
-    "./inventory": {
-      "import": "./dist/inventory.js",
-      "require": "./dist/inventory.cjs"
-    },
-    "./config": {
-      "import": "./dist/config.js",
-      "require": "./dist/config.cjs"
-    }
-  },
-  "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
-    "test": "echo \"no tests yet\""
-  },
-  "dependencies": {
-    "@intellibiz/core": "workspace:*",
-    "@intellibiz/finance": "workspace:*",
-    "@intellibiz/commerce": "workspace:*",
-    "@intellibiz/identity": "workspace:*",
-    "@intellibiz/legal": "workspace:*",
-    "@intellibiz/governance": "workspace:*",
-    "@intellibiz/inventory": "workspace:*",
-    "@intellibiz/http": "workspace:*"
-  }
+	"name": "intellibiz",
+	"version": "1.0.0",
+	"private": false,
+	"description": "Intellibiz — Business Application Engine. The public face of the V1 framework.",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs",
+			"types": "./dist/index.d.ts"
+		},
+		"./commerce": {
+			"import": "./dist/commerce.js",
+			"require": "./dist/commerce.cjs",
+			"types": "./dist/commerce.d.ts"
+		},
+		"./finance": {
+			"import": "./dist/finance.js",
+			"require": "./dist/finance.cjs",
+			"types": "./dist/finance.d.ts"
+		},
+		"./identity": {
+			"import": "./dist/identity.js",
+			"require": "./dist/identity.cjs",
+			"types": "./dist/identity.d.ts"
+		},
+		"./http": {
+			"import": "./dist/http.js",
+			"require": "./dist/http.cjs",
+			"types": "./dist/http.d.ts"
+		},
+		"./config": {
+			"import": "./dist/config.js",
+			"require": "./dist/config.cjs",
+			"types": "./dist/config.d.ts"
+		}
+	},
+	"files": ["dist"],
+	"scripts": {
+		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
+		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit",
+		"lint": "tsc --noEmit",
+		"clean": "rm -rf dist"
+	},
+	"dependencies": {
+		"@intellibiz/core": "workspace:*",
+		"@intellibiz/db": "workspace:*",
+		"@intellibiz/finance": "workspace:*",
+		"@intellibiz/commerce": "workspace:*",
+		"@intellibiz/identity": "workspace:*",
+		"@intellibiz/http": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"tsdown": "^0.22.14",
+		"typescript": "^7.0.2",
+		"vitest": "^4.1.10"
+	}
 }

@@ -7,11 +7,13 @@ This guide covers the conventions for creating a new `@intellibiz/*` package in 
 ## When to Add a Package
 
 Add a new package when:
+
 - A domain of functionality is large enough to be independently versioned and tree-shaken
 - A new plugin for an external service (e.g. `@intellibiz/plugin-sendgrid`)
 - A new database adapter (e.g. `@intellibiz/adapter-mysql`)
 
 Do not add a package for:
+
 - A single utility function — add it to `@intellibiz/shared`
 - Something that belongs in an existing package's domain
 
@@ -31,25 +33,25 @@ mkdir -p packages/my-package/src
 
 ```json
 {
-  "name": "@intellibiz/my-package",
-  "version": "0.1.0",
-  "private": false,
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev":   "tsup src/index.ts --format esm,cjs --dts --watch",
-    "test":  "vitest run"
-  },
-  "dependencies": {
-    "@intellibiz/core": "workspace:*"
-  }
+	"name": "@intellibiz/my-package",
+	"version": "1.0.0",
+	"private": false,
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"scripts": {
+		"build": "tsup src/index.ts --format esm,cjs --dts",
+		"dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@intellibiz/core": "workspace:*"
+	}
 }
 ```
 
@@ -59,12 +61,12 @@ mkdir -p packages/my-package/src
 
 ```json
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"]
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"outDir": "dist",
+		"rootDir": "src"
+	},
+	"include": ["src"]
 }
 ```
 
@@ -74,8 +76,8 @@ mkdir -p packages/my-package/src
 
 ```typescript
 // Named exports only — no default export
-export { myFeature } from './feature'
-export type { MyType } from './types'
+export { myFeature } from './feature';
+export type { MyType } from './types';
 ```
 
 ---
@@ -95,19 +97,19 @@ export type { MyType } from './types'
 If the package should be accessible from `import { x } from 'intellibiz'`, add it to `packages/intellibiz/src/index.ts`:
 
 ```typescript
-export { myFeature } from '@intellibiz/my-package'
+export { myFeature } from '@intellibiz/my-package';
 ```
 
 And add the subpath export to `packages/intellibiz/package.json`:
 
 ```json
 {
-  "exports": {
-    "./my-package": {
-      "import": "./dist/my-package.js",
-      "require": "./dist/my-package.cjs"
-    }
-  }
+	"exports": {
+		"./my-package": {
+			"import": "./dist/my-package.js",
+			"require": "./dist/my-package.cjs"
+		}
+	}
 }
 ```
 

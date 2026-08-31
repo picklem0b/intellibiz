@@ -1,7 +1,7 @@
 import { defineConfig } from 'intellibiz/config'
 
 export default defineConfig({
-  modules: ['commerce', 'finance', 'inventory', 'logistics', 'legal'],
+  modules: ['commerce', 'finance', 'identity', 'db'],
 
   tenancy: {
     strategy: 'column',
@@ -10,8 +10,14 @@ export default defineConfig({
     strict: true,
   },
 
+  database: {
+    pool: { min: 2, max: 10 },
+    queryTimeout: 30_000,
+  },
+
   finance: {
     baseCurrency: 'USD',
+    rounding: 'bankers',
     taxation: {
       provider: 'internal',
       autoCalculate: true,
@@ -21,11 +27,6 @@ export default defineConfig({
   commerce: {
     ledger: { mode: 'atomic' },
     invoicing: 'auto',
-  },
-
-  inventory: {
-    mode: 'strict',
-    lowStockAlert: 5,
   },
 
   governance: {
@@ -38,7 +39,14 @@ export default defineConfig({
     trace: true,
   },
 
-  overrides: {
-    shippingCalculator: true,
+  taxation: {
+    provider: 'internal',
+    defaultRate: 0.15,
+  },
+
+  ledger: {
+    mode: 'atomic',
+    sync: ['db'],
+    retention: '7y',
   },
 })

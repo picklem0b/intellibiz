@@ -30,25 +30,25 @@ These are non-negotiable. No code path may violate them:
 
 ## III. Technical Stack
 
-| Role | Choice | Version |
-|------|--------|---------|
-| Business Logic | TypeScript | `^7.0.2` |
-| Performance Engine | Rust via NAPI-RS | napi `^2.16` |
-| Runtime | Node.js (primary), Bun (supported) | Node 18+ |
-| Package Manager | pnpm workspaces | `9+` |
-| Build | tsup + Turborepo | tsup `^8.5.1`, turbo `^2.10.8` |
-| Validation | Zod | `^4.4.3` |
-| Formatter | Prettier | `^3.9.6` |
-| Database | Kysely + `sql` tagged templates | `^0.29.4` |
-| HTTP | Hono (internal, wrapped by `@intellibiz/http`) | `^4.12.34` |
-| Decimal Math (TS) | Decimal.js (TS-side safety) | `^10.6.0` |
-| Rust Math | `rust_decimal` 128-bit | `1.35.0` |
-| Logging | Pino (auto-injects traceId/tenantId/userId) | `^10.3.1` |
-| CLI UI | `@clack/prompts` | `^1.7.0` |
-| CLI Logic | `cac` | `^7.0.0` |
-| Security | `jose` (JWT/crypto) | `^6.2.8` |
-| Dates | `dayjs` | `^1.11.21` |
-| Scaffolding | `fs-extra` | `^11.4.0` |
+| Role               | Choice                                         | Version                        |
+| ------------------ | ---------------------------------------------- | ------------------------------ |
+| Business Logic     | TypeScript                                     | `^7.0.2`                       |
+| Performance Engine | Rust via NAPI-RS                               | napi `^2.16`                   |
+| Runtime            | Node.js (primary), Bun (supported)             | Node 18+                       |
+| Package Manager    | pnpm workspaces                                | `9+`                           |
+| Build              | tsup + Turborepo                               | tsup `^8.5.1`, turbo `^2.10.8` |
+| Validation         | Zod                                            | `^4.4.3`                       |
+| Formatter          | Prettier                                       | `^3.9.6`                       |
+| Database           | Kysely + `sql` tagged templates                | `^0.29.4`                      |
+| HTTP               | Hono (internal, wrapped by `@intellibiz/http`) | `^4.12.34`                     |
+| Decimal Math (TS)  | Decimal.js (TS-side safety)                    | `^10.6.0`                      |
+| Rust Math          | `rust_decimal` 128-bit                         | `1.35.0`                       |
+| Logging            | Pino (auto-injects traceId/tenantId/userId)    | `^10.3.1`                      |
+| CLI UI             | `@clack/prompts`                               | `^1.7.0`                       |
+| CLI Logic          | `cac`                                          | `^7.0.0`                       |
+| Security           | `jose` (JWT/crypto)                            | `^6.2.8`                       |
+| Dates              | `dayjs`                                        | `^1.11.21`                     |
+| Scaffolding        | `fs-extra`                                     | `^11.4.0`                      |
 
 **Turbo v2 note:** `turbo.json` uses `tasks`, not `pipeline`.
 
@@ -66,17 +66,17 @@ The boundary is NAPI-RS. TypeScript calls into Rust via async workers. Node.js e
 
 **Rust crates:**
 
-| Crate | Purpose |
-|-------|---------|
-| `crates/ledger` | Double-entry WAL, SHA-256 block chaining |
-| `crates/rule-engine` | Multi-tier compliance pipeline |
-| `crates/formula-engine` | `rust_decimal` fixed-point arithmetic |
-| `crates/query-planner` | AST compiler, tenancy/soft-delete injection |
-| `crates/permissions` | Bitmask RBAC/ABAC (500k+ checks/sec/core) |
-| `crates/scheduler` | Timer wheels, priority queues |
-| `crates/serializer` | Binary packing, JSON, `zstd` compression |
-| `crates/crypto` | Ed25519, SHA-256, AES-256-GCM, Argon2id |
-| `crates/bindings` | NAPI-RS entry point, all `#[napi]` exports |
+| Crate                   | Purpose                                     |
+| ----------------------- | ------------------------------------------- |
+| `crates/ledger`         | Double-entry WAL, SHA-256 block chaining    |
+| `crates/rule-engine`    | Multi-tier compliance pipeline              |
+| `crates/formula-engine` | `rust_decimal` fixed-point arithmetic       |
+| `crates/query-planner`  | AST compiler, tenancy/soft-delete injection |
+| `crates/permissions`    | Bitmask RBAC/ABAC (500k+ checks/sec/core)   |
+| `crates/scheduler`      | Timer wheels, priority queues               |
+| `crates/serializer`     | Binary packing, JSON, `zstd` compression    |
+| `crates/crypto`         | Ed25519, SHA-256, AES-256-GCM, Argon2id     |
+| `crates/bindings`       | NAPI-RS entry point, all `#[napi]` exports  |
 
 ---
 
@@ -84,19 +84,29 @@ The boundary is NAPI-RS. TypeScript calls into Rust via async workers. Node.js e
 
 ```typescript
 // Standard — 99% of application code
-import { http, commerce, finance, identity, legal, sql, money, defineAction, on } from 'intellibiz'
+import {
+	http,
+	commerce,
+	finance,
+	identity,
+	legal,
+	sql,
+	money,
+	defineAction,
+	on
+} from 'intellibiz';
 
 // Subpath — tree-shaking or microservices
-import { sql, db }        from 'intellibiz/db'
-import { money, finance } from 'intellibiz/finance'
-import { commerce }       from 'intellibiz/commerce'
-import { identity }       from 'intellibiz/identity'
-import { legal }          from 'intellibiz/legal'
-import { defineConfig }   from 'intellibiz/config'
-import { http }           from 'intellibiz/http'
+import { sql, db } from 'intellibiz/db';
+import { money, finance } from 'intellibiz/finance';
+import { commerce } from 'intellibiz/commerce';
+import { identity } from 'intellibiz/identity';
+import { legal } from 'intellibiz/legal';
+import { defineConfig } from 'intellibiz/config';
+import { http } from 'intellibiz/http';
 
 // Internal package development only
-import { getContext, runWithContext } from '@intellibiz/core'
+import { getContext, runWithContext } from '@intellibiz/core';
 ```
 
 `intellibiz` is a barrel + Context-Bound Proxy. Each named export reads the current ALS store. Developers never pass `req`, `db`, or `tenantId` through function parameters.
@@ -107,23 +117,24 @@ import { getContext, runWithContext } from '@intellibiz/core'
 
 **Never name a context parameter `ctx`.**
 
-| Context | Trigger | Parameter Name | Unique Properties |
-|---------|---------|---------------|-------------------|
-| `RequestContext` | HTTP request | `req` | `body`, `params`, `query`, `headers`, `ip`, `method`, `url` |
-| `ActionContext` | Business logic | `action` | `data`, `result`, `origin` |
-| `EventContext` | Event bus | `event` | `name`, `payload`, `source`, `timestamp` |
-| `JobContext` | Queue worker | `job` | `id`, `attempt`, `queue`, `retry(delay)`, `fail(reason)` |
-| `TaskContext` | Cron scheduler | `task` | `runId`, `schedule`, `nextRun` |
-| `ApplicationContext` | Lifecycle hook | `app` | `plugins`, `http`, `scheduler`, `queue` |
+| Context              | Trigger        | Parameter Name | Unique Properties                                           |
+| -------------------- | -------------- | -------------- | ----------------------------------------------------------- |
+| `RequestContext`     | HTTP request   | `req`          | `body`, `params`, `query`, `headers`, `ip`, `method`, `url` |
+| `ActionContext`      | Business logic | `action`       | `data`, `result`, `origin`                                  |
+| `EventContext`       | Event bus      | `event`        | `name`, `payload`, `source`, `timestamp`                    |
+| `JobContext`         | Queue worker   | `job`          | `id`, `attempt`, `queue`, `retry(delay)`, `fail(reason)`    |
+| `TaskContext`        | Cron scheduler | `task`         | `runId`, `schedule`, `nextRun`                              |
+| `ApplicationContext` | Lifecycle hook | `app`          | `plugins`, `http`, `scheduler`, `queue`                     |
 
 **`IntellibizStore` shape (ALS):**
+
 ```typescript
 interface IntellibizStore {
-  readonly traceId: string   // 'ibiz_trc_<uuid>' — lexically sortable
-  tenantId?: string
-  userId?: string
-  readonly startTime: bigint // process.hrtime.bigint()
-  readonly origin: 'http' | 'queue' | 'cron' | 'cli' | 'socket'
+	readonly traceId: string; // 'ibiz_trc_<uuid>' — lexically sortable
+	tenantId?: string;
+	userId?: string;
+	readonly startTime: bigint; // process.hrtime.bigint()
+	readonly origin: 'http' | 'queue' | 'cron' | 'cli' | 'socket';
 }
 ```
 
@@ -139,29 +150,44 @@ interface IntellibizStore {
 ## VII. `defineAction` — Two Forms
 
 ```typescript
-import { defineAction } from 'intellibiz'
-import { z } from 'zod'
+import { defineAction } from 'intellibiz';
+import { z } from 'zod';
 
 // Form 1 — inline, no validation
-export const getHealth = defineAction(async (action) => {
-  return { status: 'healthy', traceId: action.traceId }
-})
+export const getHealth = defineAction(async action => {
+	return { status: 'healthy', traceId: action.traceId };
+});
 
 // Form 2 — schema object, validates action.data before handler runs
 const CheckoutInput = z.object({
-  cartItems: z.array(z.object({ productId: z.string().uuid(), quantity: z.number().int().positive(), price: z.string() })),
-})
+	cartItems: z.array(
+		z.object({
+			productId: z.string().uuid(),
+			quantity: z.number().int().positive(),
+			price: z.string()
+		})
+	)
+});
 
 export const processCheckout = defineAction({
-  input: CheckoutInput,
-  handler: async (action) => {
-    const { cartItems } = action.data // fully typed to CheckoutInput
-    return await commerce.transaction(async (tx) => {
-      const total = await finance.calculateTotal({ items: cartItems.map(i => ({ price: finance.money(i.price, 'USD'), quantity: i.quantity })) })
-      return await tx.payments.charge({ amount: total.grandTotal, orderId: `ord_${Date.now()}`, customerEmail: '' })
-    })
-  },
-})
+	input: CheckoutInput,
+	handler: async action => {
+		const { cartItems } = action.data; // fully typed to CheckoutInput
+		return await commerce.transaction(async tx => {
+			const total = await finance.calculateTotal({
+				items: cartItems.map(i => ({
+					price: finance.money(i.price, 'USD'),
+					quantity: i.quantity
+				}))
+			});
+			return await tx.payments.charge({
+				amount: total.grandTotal,
+				orderId: `ord_${Date.now()}`,
+				customerEmail: ''
+			});
+		});
+	}
+});
 ```
 
 ---
@@ -169,25 +195,28 @@ export const processCheckout = defineAction({
 ## VIII. Pure SQL Engine (`sql`)
 
 ```typescript
-import { sql } from 'intellibiz'
+import { sql } from 'intellibiz';
 
 // Standard — ${value} becomes safe $1 parameter
 // Query Planner injects: AND org_id = 'tenantId' AND deleted_at IS NULL
-const orders = await sql`SELECT * FROM orders WHERE status = ${status}`
+const orders = await sql`SELECT * FROM orders WHERE status = ${status}`;
 
 // Dynamic composition
-const fragments = []
-if (category) fragments.push(sql.fragment`category = ${category}`)
-if (maxPrice)  fragments.push(sql.fragment`price <= ${maxPrice}`)
-const where = fragments.length ? sql.fragment`WHERE ${sql.join(fragments, sql.fragment` AND `)}` : sql.fragment``
-const products = await sql`SELECT * FROM products ${where}`
+const fragments = [];
+if (category) fragments.push(sql.fragment`category = ${category}`);
+if (maxPrice) fragments.push(sql.fragment`price <= ${maxPrice}`);
+const where = fragments.length
+	? sql.fragment`WHERE ${sql.join(fragments, sql.fragment` AND `)}`
+	: sql.fragment``;
+const products = await sql`SELECT * FROM products ${where}`;
 
 // Escape hatches (both write governance warnings to Rust ledger)
-const allTenants = await db.sudo().sql`SELECT count(*) FROM orders`
-const result = await db.raw('SELECT custom_pg_function()')
+const allTenants = await db.sudo().sql`SELECT count(*) FROM orders`;
+const result = await db.raw('SELECT custom_pg_function()');
 ```
 
 **Query Planner pipeline:**
+
 ```
 Developer AST → Permission scope check → Tenant filter injection → Soft-delete injection → LIMIT 100 guardrail → SQL → DB
 ```
@@ -197,24 +226,25 @@ Developer AST → Permission scope check → Tenant filter injection → Soft-de
 ## IX. Money & Finance
 
 ```typescript
-import { finance } from 'intellibiz'
+import { finance } from 'intellibiz';
 
-const price = finance.money('19.99', 'USD')   // always string — never computed number
-const tax   = price.multiply(0.15)             // Rust: exactly 2.9985
-const total = price.add(tax)                   // Rust: exactly 22.9885
+const price = finance.money('19.99', 'USD'); // always string — never computed number
+const tax = price.multiply(0.15); // Rust: exactly 2.9985
+const total = price.add(tax); // Rust: exactly 22.9885
 
-total.amount            // '22.99' — rounded display string
-total.format('en-US')   // '$22.99'
-total.format('en-ZA')   // 'R 22,99'
-total.toMinorUnits()    // 2299 — safe integer for payment providers
+total.amount; // '22.99' — rounded display string
+total.format('en-US'); // '$22.99'
+total.format('en-ZA'); // 'R 22,99'
+total.toMinorUnits(); // 2299 — safe integer for payment providers
 
 // Pro-rata split — no cent lost
-const splits = total.allocate([70, 30])  // [Money('16.09'), Money('6.90')]
+const splits = total.allocate([70, 30]); // [Money('16.09'), Money('6.90')]
 ```
 
 **ISO-4217 decimal precision:** USD/EUR/ZAR = 2, JPY/KRW = 0, BHD/KWD = 3
 
 **Tax resolution order:**
+
 1. Explicit `taxRate` parameter
 2. Override file (`intellibiz/tax-rules.ts`) if `overrides.taxCalculation: true`
 3. Internal regional rate table
@@ -225,25 +255,34 @@ const splits = total.allocate([70, 30])  // [Money('16.09'), Money('6.90')]
 ## X. Atomic Transactions & WAL
 
 ```typescript
-return await commerce.transaction(async (tx) => {
-  // SQL inside the transaction context
-  const [order] = await tx.sql`INSERT INTO orders (status, org_id) VALUES ('pending', ${tenantId}) RETURNING id`
+return await commerce.transaction(async tx => {
+	// SQL inside the transaction context
+	const [order] =
+		await tx.sql`INSERT INTO orders (status, org_id) VALUES ('pending', ${tenantId}) RETURNING id`;
 
-  // Each tx.* step registers its compensating action before executing
-  const payment = await tx.payments.charge({ amount: total, orderId: order.id, customerEmail: '' })
-  const license = await tx.licenses.issue({ plan: 'pro' })
-  await tx.inventory.commit(cartItems)
+	// Each tx.* step registers its compensating action before executing
+	const payment = await tx.payments.charge({
+		amount: total,
+		orderId: order.id,
+		customerEmail: ''
+	});
+	const license = await tx.licenses.issue({ plan: 'pro' });
+	await tx.inventory.commit(cartItems);
 
-  return { orderId: order.id, paymentId: payment.id, licenseKey: license.key }
-})
+	return {
+		orderId: order.id,
+		paymentId: payment.id,
+		licenseKey: license.key
+	};
+});
 ```
 
 **Compensating actions:**
 
-| Forward | Compensating |
-|---------|-------------|
-| `tx.payments.charge()` | `payment.refund()` |
-| `tx.licenses.issue()` | `license.revoke()` |
+| Forward                 | Compensating          |
+| ----------------------- | --------------------- |
+| `tx.payments.charge()`  | `payment.refund()`    |
+| `tx.licenses.issue()`   | `license.revoke()`    |
 | `tx.inventory.commit()` | `inventory.restore()` |
 
 **Transaction states:** `PENDING` → `COMMITTED` / `ROLLED_BACK` / `MANUAL_REVIEW` / `PENDING_BANK_RECONCILIATION`
@@ -256,21 +295,21 @@ Flags are boot-time contracts validated by Zod. Static — never change at runti
 
 ```typescript
 // intellibiz.config.ts
-import { defineConfig } from 'intellibiz/config'
-import { postgresAdapter } from '@intellibiz/adapter-postgres'
+import { defineConfig } from 'intellibiz/config';
+import { postgresAdapter } from '@intellibiz/adapter-postgres';
 
 export default defineConfig({
-  modules:     ['commerce', 'finance', 'identity', 'legal', 'db'],
-  database:    postgresAdapter({ url: process.env.DATABASE_URL! }),
-  tenancy:     { strategy: 'column', key: 'org_id', type: 'uuid', strict: true },
-  currency:    { base: 'USD', rounding: 'bankers' },
-  taxation:    { provider: 'internal', defaultRate: 0.15 },
-  ledger:      { mode: 'atomic', sync: ['db'], retention: '7y' },
-  commerce:    { ledger: { mode: 'atomic' }, invoicing: 'auto' },
-  governance:  { auditAll: true, allowSudo: false },
-  environment: { dryRun: false, trace: true },
-  overrides:   { path: './intellibiz', autoScaffold: true },
-})
+	modules: ['commerce', 'finance', 'identity', 'legal', 'db'],
+	database: postgresAdapter({ url: process.env.DATABASE_URL! }),
+	tenancy: { strategy: 'column', key: 'org_id', type: 'uuid', strict: true },
+	currency: { base: 'USD', rounding: 'bankers' },
+	taxation: { provider: 'internal', defaultRate: 0.15 },
+	ledger: { mode: 'atomic', sync: ['db'], retention: '7y' },
+	commerce: { ledger: { mode: 'atomic' }, invoicing: 'auto' },
+	governance: { auditAll: true, allowSudo: false },
+	environment: { dryRun: false, trace: true },
+	overrides: { path: './intellibiz', autoScaffold: true }
+});
 ```
 
 Full flag reference: `docs/reference/config-flags.md`
@@ -316,20 +355,20 @@ http.listen(3000)
 ```typescript
 // Declare event types once via module augmentation
 declare module 'intellibiz' {
-  interface IntellibizEvents {
-    'order.placed':    { orderId: string; total: string }
-    'license.expired': { licenseId: string; plan: string }
-    'stock.low':       { productId: string; available: number }
-  }
+	interface IntellibizEvents {
+		'order.placed': { orderId: string; total: string };
+		'license.expired': { licenseId: string; plan: string };
+		'stock.low': { productId: string; available: number };
+	}
 }
 
 // Emit — fully type-checked
-await emit('order.placed', { orderId: 'ord_123', total: '49.99' })
+await emit('order.placed', { orderId: 'ord_123', total: '49.99' });
 
 // Subscribe
-on('order.placed', async (event) => {
-  event.log.info(`Order: ${event.payload.orderId}`)
-})
+on('order.placed', async event => {
+	event.log.info(`Order: ${event.payload.orderId}`);
+});
 ```
 
 Providers: `'memory'` (single-node) → `'redis'` / `'nats'` (multi-node) via `eventBus.provider` flag.
@@ -339,16 +378,21 @@ Providers: `'memory'` (single-node) → `'redis'` / `'nats'` (multi-node) via `e
 ## XIV. Error Handling
 
 ```typescript
-import { IntellibizError } from 'intellibiz'
+import { IntellibizError } from 'intellibiz';
 
 // Domain error factories — map to HTTP status codes automatically
-throw legal.SignatureRequiredError()           // 403
-throw finance.InsufficientFundsError()        // 422
-throw identity.UnauthenticatedError()         // 401
-throw inventory.InsufficientStockError(opts)  // 422
+throw legal.SignatureRequiredError(); // 403
+throw finance.InsufficientFundsError(); // 422
+throw identity.UnauthenticatedError(); // 401
+throw inventory.InsufficientStockError(opts); // 422
 
 // Custom error
-throw new IntellibizError({ code: 'CART_EXPIRED', message: '...', status: 400, details: { cartId } })
+throw new IntellibizError({
+	code: 'CART_EXPIRED',
+	message: '...',
+	status: 400,
+	details: { cartId }
+});
 ```
 
 Full error registry: `docs/api/errors.md`
@@ -369,24 +413,35 @@ intellibiz/
 │   ├── serializer/
 │   ├── query-planner/
 │   └── permissions/
-├── packages/
+├── packages/                # V1 public packages only
 │   ├── core/                # @intellibiz/core — Kernel, ALS, NAPI-RS bridge
 │   ├── db/                  # @intellibiz/db — sql tagged templates, Kysely proxy
 │   ├── finance/             # @intellibiz/finance — Money, tax, currency
 │   ├── commerce/            # @intellibiz/commerce — Payments, WAL transactions
 │   ├── identity/            # @intellibiz/identity — RBAC, tenancy, JWT
-│   ├── legal/               # @intellibiz/legal — EULA, licenses, GDPR
-│   ├── governance/          # @intellibiz/governance — Ledger queries, P&L
-│   ├── inventory/           # @intellibiz/inventory — Stock, SKUs
 │   ├── http/                # @intellibiz/http — Hono wrapper, RequestContext
 │   ├── cli/                 # @intellibiz/cli — Dev tools
 │   ├── testing/             # @intellibiz/testing — Test utilities
-│   ├── types/               # @intellibiz/types — Shared TypeScript types
-│   ├── plugins/
-│   │   ├── stripe/          # @intellibiz/plugin-stripe
-│   │   ├── postgres/        # @intellibiz/adapter-postgres
-│   │   └── ...
 │   └── intellibiz/          # intellibiz metapackage (public face)
+├── plugins/                 # Provider plugins (separate versioning cadence)
+│   ├── stripe/              # @intellibiz/plugin-stripe
+│   ├── postgres/            # @intellibiz/plugin-postgres
+│   ├── redis/               # @intellibiz/plugin-redis
+│   ├── s3/                  # @intellibiz/plugin-s3
+│   ├── mysql/               # @intellibiz/plugin-mysql
+│   ├── sqlite/              # @intellibiz/plugin-sqlite
+│   ├── openai/              # @intellibiz/plugin-openai
+│   ├── anthropic/           # @intellibiz/plugin-anthropic
+│   ├── aws/                 # @intellibiz/plugin-aws
+│   ├── azure/               # @intellibiz/plugin-azure
+│   └── gcp/                 # @intellibiz/plugin-gcp
+├── internal/                # Private workspace packages — not published to npm
+│   ├── shared/              # @intellibiz/shared
+│   ├── types/               # @intellibiz/types
+│   └── logger/              # @intellibiz/logger
+├── tools/                   # Developer tooling — not runtime packages
+│   ├── create-intellibiz/   # npx create-intellibiz scaffolder
+│   └── sdk/                 # Client SDK generator
 ├── docs/
 │   ├── agent.md             # This file — source of truth
 │   ├── SYNTAX_AND_LIBRARIES.md
@@ -399,12 +454,13 @@ intellibiz/
 │   └── contributing/        # development-setup, adding-a-package, rust-development
 ├── examples/
 │   └── flagship-store/      # North-star example — full e-commerce
+├── benchmarks/              # Performance comparisons vs express, fastify, hono, elysia
 ├── ROADMAP.md               # Phase 0–6 V1 implementation blueprint
 ├── CHANGELOG.md
 ├── LICENSE                  # Apache 2.0
 ├── Cargo.toml               # Rust workspace root
 ├── package.json
-├── pnpm-workspace.yaml
+├── pnpm-workspace.yaml      # packages/*, plugins/*, internal/*, tools/*, examples/*
 ├── turbo.json               # Uses 'tasks' not 'pipeline' (Turbo v2)
 └── tsconfig.base.json
 ```
@@ -415,19 +471,36 @@ intellibiz/
 
 ```
 git add -A
-git commit -m "(type): short summary"
-git tag vMAJOR.MINOR.PATCH -m "short paragraph summary"
-git push origin dev --follow-tags
+git commit -m "(type): detailed summary of every meaningful change made"
+git tag vMAJOR.MINOR.PATCH -m "one short sentence describing what this version is"
+gpod --follow-tags
 ```
+
+**Rules:**
+
+- The commit `-m` carries the detail — list every file changed, every decision made, every package affected. This is the searchable record.
+- The tag `-m` is a single short sentence — a human-readable label for the version. Not a list.
+- `gpod` is the alias for `git push origin dev`. Always use `--follow-tags` so the tag pushes with the commit.
+- Never push to `main` directly. All work goes to `dev`.
 
 **Commit types:** `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `build`
 
 **Version rules:**
+
 - `PATCH` — bug fix, typo, correction to existing content
 - `MINOR` — new file, new feature, additive change
-- `MAJOR` — breaking API change
+- `MAJOR` — breaking API change, monorepo restructure, rename of public packages
 
 **Branches:** `main` (stable) | `dev` (active) | `feat/*` | `fix/*` | `v1.x` (LTS)
+
+**Example:**
+
+```
+git add -A
+git commit -m "(docs): update all API docs — core, db, finance, commerce, identity, legal, governance, inventory, http, cli, testing, add api/index.md"
+git tag v0.6.0 -m "complete API reference rewrite"
+gpod --follow-tags
+```
 
 ---
 
@@ -452,21 +525,21 @@ git push origin dev --follow-tags
 
 ## XVIII. The Never List
 
-| # | Never | Always |
-|---|-------|--------|
-| 1 | `number` or `float` for money | `finance.money('19.99', 'USD')` |
-| 2 | Context param named `ctx` | `req`, `action`, `event`, `job`, `task`, `app` |
-| 3 | `res.send()` or `res.json()` | Return a value from the handler |
-| 4 | String concatenation in SQL | `` sql`WHERE id = ${id}` `` |
-| 5 | Unfiltered cross-tenant queries | `db.sudo()` (logged + requires flag) |
-| 6 | Prisma or TypeORM | `sql` tagged templates + Kysely |
-| 7 | Hardcoded secrets in config | `process.env.SECRET_KEY` |
-| 8 | `import * as X` | Named imports only |
-| 9 | Default exports in library code | Named exports (except config and overrides) |
-| 10 | Blocking the event loop with CPU work | NAPI-RS async workers in Rust |
+| #   | Never                                 | Always                                         |
+| --- | ------------------------------------- | ---------------------------------------------- |
+| 1   | `number` or `float` for money         | `finance.money('19.99', 'USD')`                |
+| 2   | Context param named `ctx`             | `req`, `action`, `event`, `job`, `task`, `app` |
+| 3   | `res.send()` or `res.json()`          | Return a value from the handler                |
+| 4   | String concatenation in SQL           | `` sql`WHERE id = ${id}` ``                    |
+| 5   | Unfiltered cross-tenant queries       | `db.sudo()` (logged + requires flag)           |
+| 6   | Prisma or TypeORM                     | `sql` tagged templates + Kysely                |
+| 7   | Hardcoded secrets in config           | `process.env.SECRET_KEY`                       |
+| 8   | `import * as X`                       | Named imports only                             |
+| 9   | Default exports in library code       | Named exports (except config and overrides)    |
+| 10  | Blocking the event loop with CPU work | NAPI-RS async workers in Rust                  |
 
 ---
 
-*End of Source of Truth — Version 2.0.0*
+_End of Source of Truth — Version 2.0.0_
 
-*Cross-reference: `docs/SYNTAX_AND_LIBRARIES.md`, `docs/reference/config-flags.md`, `ROADMAP.md`*
+_Cross-reference: `docs/SYNTAX_AND_LIBRARIES.md`, `docs/reference/config-flags.md`, `ROADMAP.md`_

@@ -1,23 +1,29 @@
 {
     "name": "intellibiz-monorepo",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "private": true,
     "scripts": {
         "build": "turbo run build",
+        "build:rust": "cargo build --release --manifest-path Cargo.toml",
         "dev": "turbo run dev",
         "test": "turbo run test",
         "lint": "turbo run lint",
-        "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+        "typecheck": "turbo run typecheck",
+        "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+        "clean": "turbo run clean && rm -rf node_modules"
     },
     "devDependencies": {
-        "prettier": "^3.9.6",
+        "@changesets/cli": "^2.27.7",
+        "@types/node": "^22.0.0",
+        "prettier": "^3.5.3",
+        "tsdown": "^0.22.14",
         "turbo": "^2.10.8",
         "typescript": "^7.0.2",
-        "tsup": "^8.5.1"
+        "vitest": "^4.1.10"
     },
     "engines": {
-        "node": ">=18.0.0",
-        "pnpm": ">=9.0.0"
+        "node": ">=22.0.0",
+        "pnpm": ">=10.0.0"
     },
-    "packageManager": "pnpm@9.0.0"
+    "packageManager": "pnpm@10.11.0"
 }

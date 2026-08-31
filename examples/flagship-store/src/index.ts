@@ -19,7 +19,18 @@ http.get('/api/v1/health', async (req) => {
   return {
     status: 'operational',
     tenant: req.tenantId,
+    traceId: req.traceId,
     timestamp: new Date().toISOString(),
+  }
+})
+
+http.get('/api/v1/orders/:id', async (req) => {
+  const orderId = req.params.id
+  return {
+    orderId,
+    status: 'delivered',
+    tenantId: req.tenantId,
+    message: `Order ${orderId} details would be fetched from database here`,
   }
 })
 

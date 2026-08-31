@@ -1,4 +1,8 @@
 packages:
-  - 'packages/*'
-  - 'packages/plugins/*'
-  - 'tools/*'
+  - packages/*
+  - plugins/*
+  - internal/*
+  - tools/*
+  - examples/*
+onlyBuiltDependencies:
+  - esbuild
