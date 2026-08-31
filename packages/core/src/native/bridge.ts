@@ -249,9 +249,21 @@ export function getNative(): NativeBridge {
 	if (_native !== null) return _native;
 
 	try {
-		// In a built project, the .node addon lives next to this file
-		_native = require('../../../intellibiz.node') as NativeBridge;
-		return _native;
+		// In a built project, try multiple paths to find the .node addon
+		const paths = [
+			'../../../intellibiz.node',  // When loaded from dist/
+			'../../intellibiz.node',     // When loaded from src/
+			'../intellibiz.node',        // When loaded from native/
+		];
+		for (const p of paths) {
+			try {
+				_native = require(p) as NativeBridge;
+				return _native;
+			} catch {
+				// try next path
+			}
+		}
+		throw new Error('Native addon not found in any path');
 	} catch {
 		// Native addon not found — use TypeScript fallback
 		if (process.env['NODE_ENV'] !== 'test') {

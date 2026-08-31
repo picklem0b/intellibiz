@@ -1,4 +1,4 @@
-import type { IntellibizStore } from './store.js';
+import type { IntellibizStore, ContextOrigin } from './store.js';
 
 // ─── Module Augmentation Interfaces ──────────────────────────────────────────
 
@@ -96,7 +96,7 @@ export interface RequestContext extends BaseContext {
  */
 export interface ActionContext<TData = unknown> extends BaseContext {
 	readonly data: TData;
-	readonly origin: string;
+	readonly origin: ContextOrigin;
 }
 
 /**

@@ -15,6 +15,9 @@ export const TenancySchema = z.object({
 	resolve: z
 		.any()
 		.optional()
+}).partial().extend({
+	// Strategy is always required
+	strategy: z.enum(['column', 'schema']),
 });
 
 export const AuthSchema = z.object({
@@ -23,6 +26,9 @@ export const AuthSchema = z.object({
 	algorithm: z.enum(['HS256', 'RS256']).default('HS256'),
 	tokenExpiry: z.string().default('24h'),
 	refreshTokenExpiry: z.string().default('30d')
+}).partial().extend({
+	// Provider is always required
+	provider: z.enum(['internal', 'external']),
 });
 
 export const FinanceSchema = z.object({
@@ -44,6 +50,9 @@ export const FinanceSchema = z.object({
 				.default('hourly')
 		})
 		.optional()
+}).partial().extend({
+	// baseCurrency is always required
+	baseCurrency: z.string().length(3).toUpperCase(),
 });
 
 export const CommerceSchema = z.object({
@@ -59,7 +68,7 @@ export const CommerceSchema = z.object({
 			ttlHours: z.number().int().positive().default(24)
 		})
 		.optional()
-});
+}).partial();
 
 export const LedgerSchema = z.object({
 	mode: z.enum(['atomic', 'background']).default('atomic'),
@@ -69,7 +78,7 @@ export const LedgerSchema = z.object({
 		.regex(/^\d+[dwmy]$/, 'Must be a duration like "7y", "90d"')
 		.default('7y'),
 	signatureAlgorithm: z.enum(['ed25519', 'sha256']).default('sha256')
-});
+}).partial();
 
 export const GovernanceSchema = z.object({
 	auditAll: z.boolean().default(true),
@@ -78,7 +87,7 @@ export const GovernanceSchema = z.object({
 	excludeSensitive: z
 		.array(z.string())
 		.default(['password', 'cardNumber', 'ssn'])
-});
+}).partial();
 
 export const DatabaseSchema = z.object({
 	url: z.string().url().optional(),
@@ -90,7 +99,7 @@ export const DatabaseSchema = z.object({
 		.optional(),
 	queryTimeout: z.number().int().positive().default(30_000),
 	defaultLimit: z.number().int().positive().default(100)
-});
+}).partial();
 
 export const EnvironmentSchema = z.object({
 	dryRun: z.boolean().default(false),
@@ -98,13 +107,13 @@ export const EnvironmentSchema = z.object({
 	logLevel: z
 		.enum(['debug', 'info', 'warn', 'error', 'silent'])
 		.default('info')
-});
+}).partial();
 
 export const EventBusSchema = z.object({
 	provider: z.enum(['internal', 'redis', 'nats']).default('internal'),
 	maxRetries: z.number().int().nonnegative().default(3),
 	deadLetterRetention: z.string().default('7d')
-});
+}).partial();
 
 // ─── Root Config Schema ───────────────────────────────────────────────────────
 
@@ -112,13 +121,13 @@ export const InventorySchema = z.object({
 	mode: z.enum(['strict', 'lenient']).default('strict'),
 	lowStockAlert: z.number().int().nonnegative().default(5),
 	reservationTtl: z.string().default('15m')
-});
+}).partial();
 
 export const OverridesSchema = z.object({
 	taxCalculation: z.boolean().default(false),
 	autoScaffold: z.boolean().default(true),
 	path: z.string().default('./intellibiz')
-});
+}).partial();
 
 export const IntellibizConfigSchema = z.object({
 	/** Modules to enable — controls which packages are loaded at boot. */
@@ -140,6 +149,7 @@ export const IntellibizConfigSchema = z.object({
 			provider: z.enum(['internal', 'external']).default('internal'),
 			defaultRate: z.number().min(0).max(1).default(0)
 		})
+		.partial()
 		.optional(),
 	plugins: z.array(z.any()).optional(),
 	overrides: OverridesSchema.optional()

@@ -1,4 +1,4 @@
-import { jwtVerify, createHmac } from 'jose';
+import { jwtVerify } from 'jose';
 import type { JWTPayload } from 'jose';
 
 export interface JWTClaims extends JWTPayload {

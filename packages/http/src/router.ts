@@ -123,7 +123,7 @@ function wrapHandler(handler: Handler, method: string) {
 		};
 
 		try {
-			const result = await runWithContext(store, () => handler(reqCtx));
+			const result = await runWithContext(store, async () => handler(reqCtx));
 
 			// Apply custom headers
 			for (const [k, v] of Object.entries(_responseHeaders)) {
@@ -131,13 +131,13 @@ function wrapHandler(handler: Handler, method: string) {
 			}
 
 			if (_statusOverride !== null) {
-				return c.json(result, _statusOverride);
+				return c.json(result, _statusOverride as any);
 			}
 
 			return buildResponse(c, result, method);
 		} catch (err) {
 			if (err instanceof IntellibizError) {
-				return c.json(err.toJSON(), err.status);
+				return c.json(err.toJSON(), err.status as any);
 			}
 			// Domain error factory objects (plain errors with .code and .status)
 			if (err instanceof Error && 'code' in err && 'status' in err) {
@@ -161,7 +161,7 @@ function wrapHandler(handler: Handler, method: string) {
 					error: 'INTERNAL_ERROR',
 					message: 'An unexpected error occurred.'
 				},
-				500
+				500 as const
 			);
 		}
 	};
@@ -179,14 +179,14 @@ export class IntellibizRouter {
 		// Global error handler
 		this.app.onError((err, c) => {
 			if (err instanceof IntellibizError) {
-				return c.json(err.toJSON(), err.status);
+				return c.json(err.toJSON(), err.status as any);
 			}
 			return c.json(
 				{
 					error: 'INTERNAL_ERROR',
 					message: 'An unexpected error occurred.'
 				},
-				500
+				500 as const
 			);
 		});
 	}
@@ -227,13 +227,51 @@ export class IntellibizRouter {
 		return new RouteGroup(this.app, prefix);
 	}
 
+	private _server: ReturnType<typeof serve> | null = null;
+	private _activeConnections = new Set<ReturnType<typeof import('node:net').createConnection>>();
+
 	/**
-	 * Starts the server. Uses @hono/node-server on Node.js.
+	 * Starts the server with graceful shutdown support.
+	 * Listens for SIGTERM/SIGINT and drains in-flight requests.
 	 */
 	listen(port: number, callback?: () => void): void {
-		serve({ fetch: this.app.fetch, port }, () => {
+		this._server = serve({ fetch: this.app.fetch, port }, () => {
 			callback?.();
 		});
+
+		// Track active connections for graceful shutdown
+		this._server.server.on('connection', (conn) => {
+			this._activeConnections.add(conn);
+			conn.on('close', () => this._activeConnections.delete(conn));
+		});
+
+		// Graceful shutdown on SIGTERM/SIGINT
+		const shutdown = async (signal: string) => {
+			console.log(`\n  Received ${signal}. Shutting down gracefully...`);
+			console.log('  Waiting for in-flight requests to complete...');
+
+			// Stop accepting new connections
+			this._server?.close();
+
+			// Wait up to 30s for in-flight requests
+			const deadline = Date.now() + 30_000;
+			while (this._activeConnections.size > 0 && Date.now() < deadline) {
+				await new Promise((r) => setTimeout(r, 100));
+			}
+
+			if (this._activeConnections.size > 0) {
+				console.log(`  Force-closing ${this._activeConnections.size} remaining connections`);
+				for (const conn of this._activeConnections) {
+					conn.destroy();
+				}
+			}
+
+			console.log('  Server stopped.');
+			process.exit(0);
+		};
+
+		process.on('SIGTERM', () => shutdown('SIGTERM'));
+		process.on('SIGINT', () => shutdown('SIGINT'));
 	}
 
 	/** Exposes the raw Hono fetch handler for testing. */

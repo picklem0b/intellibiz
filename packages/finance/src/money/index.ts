@@ -1,8 +1,8 @@
-import Decimal from 'decimal.js';
+import { Decimal } from 'decimal.js';
 
 // Configure decimal.js to match Rust formula-engine behaviour:
 // 28 significant digits, ROUND_HALF_EVEN (Banker's rounding)
-Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_EVEN });
+Decimal.set({ precision: 28, rounding: 6 as const });
 
 // ─── Currency Precision Map ───────────────────────────────────────────────────
 
@@ -153,7 +153,7 @@ export class Money {
 		const decimals = getCurrencyDecimals(this.currency);
 		return this._amount
 			.mul(new Decimal(10).pow(decimals))
-			.toDecimalPlaces(0, Decimal.ROUND_HALF_EVEN)
+			.toDecimalPlaces(0, 6 as const)
 			.toNumber();
 	}
 
@@ -169,7 +169,7 @@ export class Money {
 	get amount(): string {
 		const decimals = getCurrencyDecimals(this.currency);
 		return this._amount
-			.toDecimalPlaces(decimals, Decimal.ROUND_HALF_EVEN)
+			.toDecimalPlaces(decimals, 6 as const)
 			.toFixed(decimals);
 	}
 

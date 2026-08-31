@@ -239,7 +239,7 @@ mod tests {
     #[test]
     fn bankers_rounding_midpoint() {
         // $0.025 in minor units = 2 (half-cent → rounds to even = 2)
-        let minor = to_minor_units("0.025", "USD").unwrap();
+        let _minor = to_minor_units("0.025", "USD").unwrap();
         let result = multiply(35, "0.1", &RoundingMode::Bankers).unwrap();
         // 2.5 rounds to 2 (even) under banker's rounding
         assert_eq!(result, 4);

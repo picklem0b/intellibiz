@@ -1,29 +1,196 @@
-- uses: actions/checkout@v4
+name: CI
 
-# Ensure Node is installed first
-- uses: actions/setup-node@v4
-  with:
-     node-version: 22
-     cache: pnpm
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
 
-# Then configure pnpm
-- uses: pnpm/action-setup@v3
-  with:
-     # optional: pin a pnpm version
-     version: 8
+jobs:
+  # ─── TypeScript Build & Test ──────────────────────────────────────────────────
+  build-and-test:
+    name: Build & Test (TypeScript)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22]
+    steps:
+      - uses: actions/checkout@v4
 
-# Debug: show versions (optional, helpful for CI debugging)
-- name: Show node & pnpm versions
-  run: |
-     node -v
-     pnpm -v
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
-# Install deps at workspace root (ensure workspace install in monorepo)
-- name: Install dependencies
-  run: pnpm -w install --frozen-lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
 
-- name: Build
-  run: pnpm -w build
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-- name: Test
-  run: pnpm -w test
+      - name: Build all packages
+        run: pnpm run build
+
+      - name: Typecheck all packages
+        run: |
+          for pkg in core finance db identity commerce http testing cli; do
+            echo "Typechecking $pkg..."
+            cd packages/$pkg && npx tsc --noEmit && cd ../..
+          done
+
+      - name: Run all tests
+        run: pnpm run test
+
+      - name: Security audit
+        run: pnpm audit --audit-level=moderate
+        continue-on-error: true
+
+  # ─── Rust Tests ──────────────────────────────────────────────────────────────
+  rust:
+    name: Rust Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Run Rust tests
+        run: cargo test --workspace
+
+      - name: Check Rust warnings
+        run: cargo clippy --workspace -- -D warnings
+        continue-on-error: true
+
+  # ─── Native Addon Build ──────────────────────────────────────────────────────
+  native-addon:
+    name: Build Native Addon
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Build native addon
+        run: cargo build --release --manifest-path crates/bindings/Cargo.toml
+
+      - name: Verify native addon loads
+        run: |
+          cp target/release/libintellibiz_bindings.so packages/core/intellibiz.node
+          node -e "
+            const mod = require('./packages/core/intellibiz.node');
+            const keys = Object.keys(mod);
+            console.log('Native addon exports:', keys.length, 'functions');
+            if (keys.length < 20) throw new Error('Too few exports');
+            console.log('✅ Native addon verified');
+          "
+
+  # ─── Scaffold Build Test ─────────────────────────────────────────────────────
+  scaffold-test:
+    name: Scaffold Build Test
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm run build
+
+      - name: Test create-intellibiz scaffold
+        run: |
+          cd /tmp
+          node /root/intellibiz/packages/create-intellibiz/dist/index.cjs test-scaffold-project
+          cd test-scaffold-project
+          cat package.json
+          echo "✅ Scaffold created successfully"
+
+  # ─── Website Build ───────────────────────────────────────────────────────────
+  website:
+    name: Website Build
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install website dependencies
+        run: cd website && pnpm install --frozen-lockfile
+
+      - name: Build website
+        run: cd website && pnpm run build
+
+  # ─── Publish (dev branch only, manual trigger) ───────────────────────────────
+  publish:
+    name: Publish Packages
+    runs-on: ubuntu-latest
+    needs: [build-and-test, rust, native-addon]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build native addon
+        run: |
+          cargo build --release --manifest-path crates/bindings/Cargo.toml
+          cp target/release/libintellibiz_bindings.so packages/core/intellibiz.node
+
+      - name: Build all packages
+        run: pnpm run build
+
+      - name: Publish (dry run)
+        run: ./scripts/publish.sh --dry
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

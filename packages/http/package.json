@@ -2,15 +2,16 @@
 	"name": "@intellibiz/http",
 	"version": "1.0.0",
 	"private": false,
+  "type": "module",
 	"description": "Intellibiz HTTP — Hono wrapper, RequestContext, middleware, routing",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+	"types": "./dist/index.d.mts",
 	"exports": {
 		".": {
-			"import": "./dist/index.js",
+			"import": "./dist/index.mjs",
 			"require": "./dist/index.cjs",
-			"types": "./dist/index.d.ts"
+			"types": "./dist/index.d.mts"
 		}
 	},
 	"files": ["dist"],
@@ -31,7 +32,7 @@
 		"@hono/node-server": "^2.1.0",
 		"@types/node": "^22.0.0",
 		"tsdown": "^0.22.14",
-		"typescript": "^7.0.2",
+		"typescript": "^5.8.3",
 		"vitest": "^4.1.10"
 	},
 	"peerDependencies": {

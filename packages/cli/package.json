@@ -2,24 +2,26 @@
 	"name": "@intellibiz/cli",
 	"version": "1.0.0",
 	"private": false,
-	"description": "Intellibiz CLI — dev server, build, audit, dashboard commands",
+  "type": "module",
+	"description": "Intellibiz CLI — dev server, build, audit, dashboard, and project scaffolding",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+	"types": "./dist/index.d.mts",
 	"bin": {
-		"intellibiz": "./dist/index.cjs"
+		"intellibiz": "./dist/index.cjs",
+		"create-intellibiz": "./dist/create.cjs"
 	},
 	"exports": {
 		".": {
-			"import": "./dist/index.js",
+			"import": "./dist/index.mjs",
 			"require": "./dist/index.cjs",
-			"types": "./dist/index.d.ts"
+			"types": "./dist/index.d.mts"
 		}
 	},
-	"files": ["dist"],
+	"files": ["dist", "README.md", "LICENSE"],
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
-		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch",
+		"build": "tsdown src/index.ts src/create.ts --format esm,cjs --dts --clean",
+		"dev": "tsdown src/index.ts src/create.ts --format esm,cjs --dts --watch",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
 		"lint": "tsc --noEmit",
@@ -34,7 +36,14 @@
 	"devDependencies": {
 		"@types/node": "^22.0.0",
 		"tsdown": "^0.22.14",
-		"typescript": "^7.0.2",
+		"typescript": "^5.8.3",
 		"vitest": "^4.1.10"
+	},
+	"publishConfig": {
+		"access": "public",
+		"bin": {
+			"intellibiz": "./dist/index.cjs",
+			"create-intellibiz": "./dist/create.cjs"
+		}
 	}
 }

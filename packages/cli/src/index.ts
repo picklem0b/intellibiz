@@ -1,5 +1,7 @@
+#!/usr/bin/env node
 import { defineCommand, runMain } from 'citty';
 import { consola } from 'consola';
+import { initCommand } from "./init.js";
 
 // ─── dev ─────────────────────────────────────────────────────────────────────
 
@@ -233,7 +235,8 @@ const main = defineCommand({
 		dashboard: dashboardCommand,
 		generate: generateCommand,
 		config: configCommand,
-		migrate: migrateCommand
+		migrate: migrateCommand,
+		init: initCommand
 	}
 });
 

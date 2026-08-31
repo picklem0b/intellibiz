@@ -1,4 +1,10 @@
-import type { Context } from 'hono';
+// hono Context type — use a minimal interface to avoid hard dependency
+interface HonoContext {
+	req: {
+		header(name: string): string | undefined;
+		url: string;
+	};
+}
 import { verifyJWT, extractBearerToken } from './jwt/index.js';
 
 // ─── Tenant Resolver ──────────────────────────────────────────────────────────
@@ -17,7 +23,7 @@ import { verifyJWT, extractBearerToken } from './jwt/index.js';
 
 export interface ResolverOptions {
 	/** Custom resolution callback from config. */
-	customResolver?: (req: Context) => string | null;
+	customResolver?: (req: HonoContext) => string | null;
 	/** JWT secret for token verification. */
 	jwtSecret?: string;
 	/** JWT algorithm. */
@@ -44,7 +50,7 @@ export interface ResolvedIdentity {
  * // identity.userId = 'usr_123'
  */
 export async function resolveIdentity(
-	c: Context,
+	c: HonoContext,
 	options: ResolverOptions = {}
 ): Promise<ResolvedIdentity> {
 	// 1. Custom resolver callback

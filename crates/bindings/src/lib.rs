@@ -3,19 +3,19 @@
 use napi_derive::napi;
 
 use intellibiz_crypto::{
-    aes256_decrypt, aes256_encrypt, argon2_hash, argon2_verify, ed25519_generate_keypair,
+    argon2_hash, argon2_verify, ed25519_generate_keypair,
     ed25519_sign, ed25519_verify, generate_license_key, sha256_hex, verify_license_key,
 };
 use intellibiz_formula_engine::{
     add, allocate, apply_basis_points, from_minor_units, multiply, subtract, to_minor_units,
     RoundingMode,
 };
-use intellibiz_ledger::{EntryState, LedgerWriter};
-use intellibiz_permissions::{Permission, PermissionRegistry};
-use intellibiz_query_planner::{PlannerConfig, QueryOperation, QueryPlanner};
+use intellibiz_ledger::LedgerWriter;
+use intellibiz_permissions::PermissionRegistry;
+use intellibiz_query_planner::{QueryOperation, QueryPlanner};
 use intellibiz_rule_engine::{evaluate, RuleContext};
-use intellibiz_scheduler::{JobPriority, ScheduledJob, Scheduler};
-use intellibiz_serializer::{compress, decompress, from_compressed_json, to_compressed_json, to_json};
+use intellibiz_scheduler::{ScheduledJob, Scheduler};
+use intellibiz_serializer::{compress, decompress, to_json};
 
 use std::sync::OnceLock;
 
@@ -40,14 +40,6 @@ fn scheduler() -> &'static Scheduler {
 
 fn query_planner() -> &'static QueryPlanner {
     QUERY_PLANNER.get_or_init(QueryPlanner::with_defaults)
-}
-
-// ─── Build script entrypoint (required by napi-build) ────────────────────────
-
-#[cfg(not(test))]
-#[napi::module_init]
-fn init() {
-    napi_build::setup();
 }
 
 // ─── Ledger Bridge ───────────────────────────────────────────────────────────

@@ -10,9 +10,7 @@ const TenancySchema = z.object({
 	type: z.enum(['uuid', 'string']).default('uuid'),
 	strict: z.boolean().default(true),
 	resolve: z
-		.function()
-		.args(z.any())
-		.returns(z.string().nullable())
+		.any()
 		.optional()
 });
 
@@ -66,8 +64,8 @@ export const IntellibizConfigSchema = z.object({
 	governance: GovernanceSchema.optional(),
 	auth: AuthSchema.optional(),
 	environment: EnvironmentSchema.optional(),
-	plugins: z.array(z.custom<PluginDefinition>()).optional(),
-	overrides: z.record(z.boolean()).optional()
+	plugins: z.array(z.any()).optional(),
+	overrides: z.record(z.string(), z.boolean()).optional()
 });
 
 export type IntellibizConfig = z.infer<typeof IntellibizConfigSchema>;
