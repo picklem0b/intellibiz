@@ -14,6 +14,13 @@ import type {
 	LicenseResult
 } from '@intellibiz/commerce';
 
+// ─── Re-export sub-modules ──────────────────────────────────────────────────
+
+export * from './tenant-context.js';
+export * from './time-travel.js';
+export * from './mock-gateway.js';
+export * from './ledger-assert.js';
+
 // ─── withContext / withTenant ─────────────────────────────────────────────────
 
 export interface TestContextOptions {
@@ -108,7 +115,7 @@ export const time = {
 	}
 };
 
-// ─── Mock Payments ────────────────────────────────────────────────────────────
+// ─── Mock Payments ──────────────────────────────────────────────────────────
 
 type MockFailure = { code: string };
 type MockSuccess = Partial<ChargeResult>;

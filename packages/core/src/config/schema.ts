@@ -13,15 +13,7 @@ export const TenancySchema = z.object({
 	 * Resolution runs before all other resolution methods.
 	 */
 	resolve: z
-		.function()
-		.args(z.any())
-		.returns(
-			z.union([
-				z.string(),
-				z.null(),
-				z.promise(z.union([z.string(), z.null()]))
-			])
-		)
+		.any()
 		.optional()
 });
 

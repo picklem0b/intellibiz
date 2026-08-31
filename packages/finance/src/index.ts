@@ -1,16 +1,26 @@
-export {
+import {
 	Money,
 	money,
 	getCurrencyDecimals,
 	CurrencyMismatchError,
 	InsufficientFundsError
 } from './money/index.js';
-export { calculateTotal } from './tax/calculator.js';
-export type {
+import { calculateTotal } from './tax/calculator.js';
+import type {
 	TaxDestination,
 	TotalInput,
 	TotalResult
 } from './tax/calculator.js';
+
+export {
+	Money,
+	money,
+	getCurrencyDecimals,
+	CurrencyMismatchError,
+	InsufficientFundsError
+};
+export { calculateTotal };
+export type { TaxDestination, TotalInput, TotalResult };
 
 export const finance = {
 	money,
@@ -19,8 +29,3 @@ export const finance = {
 	CurrencyMismatchError: (a: string, b: string) =>
 		new CurrencyMismatchError(a, b)
 };
-
-import {
-	InsufficientFundsError,
-	CurrencyMismatchError
-} from './money/index.js';
