@@ -8,8 +8,8 @@ import {
 	registeredEvents,
 	getDeadLetterQueue,
 	clearDeadLetterQueue,
-	type IntellibizEvents
 } from '../events/bus.js';
+import type { IntellibizEvents } from '../context/types.js';
 import {
 	runWithContext,
 	type IntellibizStore

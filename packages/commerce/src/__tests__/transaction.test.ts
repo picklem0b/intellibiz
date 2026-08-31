@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { transaction, setPaymentProvider, type PaymentProvider, type ChargeParams } from '../transaction/index.js';
+import { transaction, setPaymentProvider, type PaymentProvider, type ChargeParams, type ChargeResult } from '../transaction/index.js';
 import { money } from '@intellibiz/finance';
 import { runWithContext, type IntellibizStore } from '@intellibiz/core';
 
@@ -40,7 +40,7 @@ class MockPaymentProvider implements PaymentProvider {
 class FailingPaymentProvider implements PaymentProvider {
 	readonly name = 'failing';
 
-	async charge(_params: ChargeParams) {
+	async charge(_params: ChargeParams): Promise<ChargeResult> {
 		throw new Error('Payment provider error');
 	}
 }

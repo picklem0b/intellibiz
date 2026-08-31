@@ -158,9 +158,10 @@ describe('defineAction', () => {
 			await runWithContext(createContext(), async () => {
 				try {
 					await processCheckout({
+						// 
 						cartItems: 'not-an-array',
 						shippingAddress: { country: 'US' }
-					});
+					} as any);
 					expect.fail('Should have thrown');
 				} catch (err) {
 					expect(err).toBeInstanceOf(ActionValidationError);

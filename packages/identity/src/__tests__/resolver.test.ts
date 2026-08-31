@@ -5,7 +5,7 @@ import { resolveIdentity, type ResolverOptions } from '../resolver.js';
 function createMockContext(opts: {
 	headers?: Record<string, string>;
 	host?: string;
-}): { req: { header: (name: string) => string | undefined }; url: string } {
+}): any {
 	const headers = { ...opts.headers };
 	if (opts.host) headers['host'] = opts.host;
 
