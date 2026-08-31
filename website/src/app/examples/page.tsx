@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ExternalLink, Github, ArrowRight } from "lucide-react";
+import { GITHUB_URL } from "../../lib/constants";
 
 const EXAMPLES = [
   {
@@ -7,56 +8,56 @@ const EXAMPLES = [
     description:
       "Full e-commerce application with product catalog, checkout, payments, and multi-tenancy.",
     tags: ["e-commerce", "payments", "multi-tenant"],
-    href: "[GITHUB URL]/tree/main/examples/flagship-store",
+    href: GITHUB_URL + "/tree/main/examples/flagship-store",
   },
   {
     title: "Hello World",
     description:
       "Minimal starter project with a single action and HTTP route.",
     tags: ["starter", "minimal"],
-    href: "[GITHUB URL]/tree/main/examples/hello-world",
+    href: GITHUB_URL + "/tree/main/examples/hello-world",
   },
   {
     title: "Multi-Tenant SaaS",
     description:
       "Multi-tenant SaaS application with user management, subscriptions, and billing.",
     tags: ["saas", "multi-tenant", "billing"],
-    href: "[GITHUB URL]/tree/main/examples/multi-tenant",
+    href: GITHUB_URL + "/tree/main/examples/multi-tenant",
   },
   {
     title: "Accounting Ledger",
     description:
       "Double-entry accounting system with WAL journal and SHA-256 audit trail.",
     tags: ["accounting", "ledger", "audit"],
-    href: "[GITHUB URL]/tree/main/examples/accounting",
+    href: GITHUB_URL + "/tree/main/examples/accounting",
   },
   {
     title: "CRM",
     description:
       "Customer relationship management with contacts, deals, and activity tracking.",
     tags: ["crm", "contacts", "deals"],
-    href: "[GITHUB URL]/tree/main/examples/crm",
+    href: GITHUB_URL + "/tree/main/examples/crm",
   },
   {
     title: "Inventory Management",
     description:
       "SKU management with stock tracking, reservations, and warehouse operations.",
     tags: ["inventory", "sku", "warehouse"],
-    href: "[GITHUB URL]/tree/main/examples/inventory",
+    href: GITHUB_URL + "/tree/main/examples/inventory",
   },
   {
     title: "WebSocket Chat",
     description:
       "Real-time chat application with rooms, presence, and message history.",
     tags: ["websocket", "realtime", "chat"],
-    href: "[GITHUB URL]/tree/main/examples/websocket-chat",
+    href: GITHUB_URL + "/tree/main/examples/websocket-chat",
   },
   {
     title: "AI Assistant",
     description:
       "AI-powered assistant with OpenAI integration, streaming responses, and conversation history.",
     tags: ["ai", "openai", "streaming"],
-    href: "[GITHUB URL]/tree/main/examples/ai-assistant",
+    href: GITHUB_URL + "/tree/main/examples/ai-assistant",
   },
 ];
 

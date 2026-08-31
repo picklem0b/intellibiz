@@ -1,4 +1,5 @@
 "use client";
+import { GITHUB_URL } from "../lib/constants";
 
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -76,7 +77,7 @@ export function Header() {
 
           {/* GitHub */}
           <a
-            href="[GITHUB URL]"
+            href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

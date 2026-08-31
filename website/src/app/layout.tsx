@@ -1,3 +1,4 @@
+import { AUTHOR, DOCS_URL } from "../lib/constants";
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -23,12 +24,12 @@ export const metadata: Metadata = {
     "business logic",
     "saas",
   ],
-  authors: [{ name: "[AUTHOR/ORGANIZATION]" }],
-  creator: "[AUTHOR/ORGANIZATION]",
+  authors: [{ name: AUTHOR }],
+  creator: AUTHOR,
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "[DOCUMENTATION URL]",
+    url: DOCS_URL,
     siteName: "IntelliBiz",
     title: "IntelliBiz — The Operating System for Business Logic",
     description:

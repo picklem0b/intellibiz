@@ -1,5 +1,6 @@
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Github, MessageCircle, BookOpen, Heart } from "lucide-react";
+import { GITHUB_URL, COMMUNITY_URL } from "../../lib/constants";
 
 const COMMUNITY_LINKS = [
   {
@@ -7,7 +8,7 @@ const COMMUNITY_LINKS = [
     title: "GitHub",
     description:
       "Browse the source code, report issues, and contribute to IntelliBiz.",
-    href: "[GITHUB URL]",
+    href: GITHUB_URL,
     label: "View on GitHub",
   },
   {
@@ -15,7 +16,7 @@ const COMMUNITY_LINKS = [
     title: "Discord",
     description:
       "Join our Discord community to chat with other developers, ask questions, and share your projects.",
-    href: "[DISCORD/COMMUNITY URL]",
+    href: COMMUNITY_URL,
     label: "Join Discord",
   },
   {
@@ -70,7 +71,7 @@ export default function CommunityPage() {
           features.
         </p>
         <a
-          href="[GITHUB URL]"
+          href={GITHUB_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-6 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-500 transition-colors"

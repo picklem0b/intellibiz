@@ -1,3 +1,5 @@
+"use client";
+import { GITHUB_URL, COMMUNITY_URL, AUTHOR } from "../lib/constants";
 import Link from "next/link";
 
 const FOOTER_LINKS = {
@@ -22,8 +24,8 @@ const FOOTER_LINKS = {
   community: {
     title: "Community",
     links: [
-      { label: "GitHub", href: "[GITHUB URL]" },
-      { label: "Discord", href: "[DISCORD/COMMUNITY URL]" },
+      { label: "GitHub", href: GITHUB_URL },
+      { label: "Discord", href: COMMUNITY_URL },
       { label: "Contributing", href: "/docs/contributing" },
       { label: "Code of Conduct", href: "/docs/code-of-conduct" },
     ],
@@ -84,12 +86,12 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-between gap-4 border-t border-border py-6 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} [AUTHOR/ORGANIZATION]. All rights
+            &copy; {new Date().getFullYear()} {AUTHOR}. All rights
             reserved.
           </p>
           <div className="flex items-center gap-4">
             <a
-              href="[GITHUB URL]"
+              href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"
@@ -100,7 +102,7 @@ export function Footer() {
               </svg>
             </a>
             <a
-              href="[DISCORD/COMMUNITY URL]"
+              href={COMMUNITY_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"
