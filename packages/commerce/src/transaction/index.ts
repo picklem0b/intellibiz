@@ -143,7 +143,7 @@ export async function transaction<T>(
 	const journalId = `ibiz_txn_${tenantId}_${traceId}_${Date.now()}`;
 
 	const compensation = new CompensationStack();
-	let state: TransactionState = 'PENDING';
+	let state: TransactionState = 'PENDING' as TransactionState;
 
 	const tx: TransactionHandle = {
 		payments: {
@@ -197,11 +197,10 @@ export async function transaction<T>(
 	};
 
 	try {
-		const result = await fn(tx);
-		state =
-			state === 'PENDING_BANK_RECONCILIATION'
-				? 'PENDING_BANK_RECONCILIATION'
-				: 'COMMITTED';
+		const result = await fn(tx);			state =
+				(state as string) === 'PENDING_BANK_RECONCILIATION'
+					? 'PENDING_BANK_RECONCILIATION'
+					: 'COMMITTED';
 		return result;
 	} catch (err) {
 		// Execute compensating actions in reverse order

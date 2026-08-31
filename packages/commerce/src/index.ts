@@ -51,14 +51,14 @@ export { PayFastProvider, OzowProvider } from './providers/payfast.js';
 export type { PayFastConfig, OzowConfig } from './providers/payfast.js';
 
 import { transaction, setPaymentProvider, getPaymentProvider } from './transaction/index.js';
-import { handleWebhook, processWebhook } from './webhooks/dedup.js';
+import { handle, processWebhook } from './webhooks/dedup.js';
 
 export const commerce = {
 	transaction,
 	setPaymentProvider,
 	getPaymentProvider,
 	webhooks: {
-		handle: handleWebhook,
+		handle,
 		process: processWebhook
 	},
 	PaymentFailedError: (details?: Record<string, unknown>) => {
