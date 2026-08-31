@@ -11,3 +11,7 @@ Cargo.lock
 *.node
 .DS_Store
 coverage/
+website/.next/
+website/out/
+website/next-env.d.ts
+website/package-lock.json
