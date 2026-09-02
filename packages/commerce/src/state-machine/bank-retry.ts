@@ -130,12 +130,12 @@ function schedulePoll(entry: RetryEntry): void {
 
 	const elapsed = Date.now() - entry.startTime;
 	if (elapsed >= MAX_POLL_DURATION_MS || entry.attempt >= MAX_POLL_ATTEMPTS) {
-	// Max duration exceeded — mark as MANUAL_REVIEW
-	entry.resolved = true;
-	activeRetries.delete(entry.paymentId);
-	void Promise.resolve(entry.config.onResolved?.(entry.paymentId, 'MANUAL_REVIEW')).catch(() => {});
-		return;
-	}
+			// Max duration exceeded — mark as MANUAL_REVIEW
+			entry.resolved = true;
+			activeRetries.delete(entry.paymentId);
+			void Promise.resolve(entry.config.onResolved?.(entry.paymentId, 'MANUAL_REVIEW')).catch(() => {});
+			return;
+		}
 
 	entry.attempt++;
 	entry.timer = setTimeout(async () => {
@@ -143,19 +143,21 @@ function schedulePoll(entry: RetryEntry): void {
 
 		try {
 			const status = await entry.config.checkStatus(entry.paymentId);
-			entry.config.onPoll?.(entry.paymentId, entry.attempt, status);				if (status.status === 'succeeded') {
-					entry.resolved = true;
-					activeRetries.delete(entry.paymentId);
-					await entry.config.onResolved?.(entry.paymentId, 'COMMITTED');
-					return;
-				}
+			entry.config.onPoll?.(entry.paymentId, entry.attempt, status);
 
-				if (status.status === 'failed') {
-					entry.resolved = true;
-					activeRetries.delete(entry.paymentId);
-					await entry.config.onResolved?.(entry.paymentId, 'ROLLED_BACK');
-					return;
-				}
+			if (status.status === 'succeeded') {
+				entry.resolved = true;
+				activeRetries.delete(entry.paymentId);
+				await entry.config.onResolved?.(entry.paymentId, 'COMMITTED');
+				return;
+			}
+
+			if (status.status === 'failed') {
+				entry.resolved = true;
+				activeRetries.delete(entry.paymentId);
+				await entry.config.onResolved?.(entry.paymentId, 'ROLLED_BACK');
+				return;
+			}
 
 			// Still pending — schedule next poll
 			schedulePoll(entry);

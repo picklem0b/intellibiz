@@ -129,7 +129,6 @@ function rateLimitMiddleware(config: RateLimitConfig): MiddlewareHandler {
 		}
 
 		await next();
-		return;
 	};
 }
 

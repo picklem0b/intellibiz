@@ -1,8 +1,8 @@
 {
 	"name": "@intellibiz/cli",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": false,
-  "type": "module",
+	"type": "module",
 	"description": "Intellibiz CLI — dev server, build, audit, dashboard, and project scaffolding",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
@@ -18,7 +18,11 @@
 			"types": "./dist/index.d.mts"
 		}
 	},
-	"files": ["dist", "README.md", "LICENSE"],
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
 	"scripts": {
 		"build": "tsdown src/index.ts src/create.ts --format esm,cjs --dts --clean",
 		"dev": "tsdown src/index.ts src/create.ts --format esm,cjs --dts --watch",

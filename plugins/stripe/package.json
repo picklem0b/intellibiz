@@ -1,8 +1,8 @@
 {
 	"name": "@intellibiz/plugin-stripe",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": false,
-  "type": "module",
+	"type": "module",
 	"description": "Stripe payment provider plugin for IntelliBiz — charges, refunds, webhooks, checkout",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
@@ -14,7 +14,10 @@
 			"types": "./dist/index.d.mts"
 		}
 	},
-	"files": ["dist", "README.md"],
+	"files": [
+		"dist",
+		"README.md"
+	],
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
 		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch",
@@ -29,5 +32,10 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"keywords": ["intellibiz", "stripe", "payments", "plugin"]
+	"keywords": [
+		"intellibiz",
+		"stripe",
+		"payments",
+		"plugin"
+	]
 }

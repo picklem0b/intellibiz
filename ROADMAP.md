@@ -1,594 +1,156 @@
-# 🛸 Intellibiz V1 Master Implementation Roadmap
+# 🛸 Intellibiz Framework — Versioned Implementation Roadmap
 
-**Enterprise-Grade Technical Blueprint & Execution Specification: Phase 0 to Phase 6 + V2 Expansion Strategy**
-Version: 1.0.0-FINAL | Target Stack: Node.js / Bun + TypeScript + Rust (NAPI-RS Native FFI)
-
----
-
-## Executive Summary & System Invariants
-
-Intellibiz V1 is engineered as a Business Operating System built on five core packages — **The Shippable Five** (`@intellibiz/core`, `@intellibiz/db`, `@intellibiz/finance`, `@intellibiz/commerce`, `@intellibiz/identity`). Together they provide a bank-compliant, fiscally precise, multi-tenant e-commerce and SaaS engine that eliminates developer glue code.
-
-### The 5 System Invariants
-
-1. **Fiscal Precision (Never Float):** All monetary operations must use `@intellibiz/finance` fixed-point decimal arithmetic backed by Rust's 128-bit `rust_decimal` crate. Floating-point `number` is strictly forbidden for currency math.
-2. **Context-Driven Security (Never Leaking):** Multi-tenancy and soft-delete filters are injected automatically at the kernel level via Postgres `search_path` schema isolation or column filters. Developers cannot forget to isolate tenant data.
-3. **Immutable Accountability (Never Unaudited):** All state-changing financial transactions write WAL journal blocks inside the compiled Rust Native Audit Ledger.
-4. **Unrestricted Control (Never Blocked):** Developers retain full control through escape hatches (`db.sudo()`, `db.raw()`, `req.raw`) without framework lock-in.
-5. **Resilient Settlement (Never Lost):** All payment operations use an Idempotent Webhook Engine backed by a bank-reconciliation retry state machine to ensure zero dropped transactions during network or 3D-Secure timeouts.
+**Repository:** [github.com/picklem0b/intellibiz](https://github.com/picklem0b/intellibiz.git)
+**NPM Scope:** `@intellibiz/*` | **Metapackage:** `intellibiz`
+**License:** Apache License 2.0
+**Tech Stack:** TypeScript (72.45%) + Native Rust FFI (27.55% via NAPI-RS)
+**Architecture:** Event-First, Multi-Tenant, Rust WAL Ledger, Pure SQL
 
 ---
 
-## Phase 0 — Workspace, Tooling, Build Pipeline & Native FFI Setup
+## System Invariants
 
-### 0.1 Monorepo Topology
-
-Set up the `pnpm` workspace, directory tree, and Turborepo build pipeline.
-
-```
-intellibiz/
-├── packages/
-│   ├── core/              @intellibiz/core    — Kernel, ALS, Rust FFI Bridge
-│   ├── db/                @intellibiz/db      — Pure SQL, Kysely, Tenancy Injection
-│   ├── finance/           @intellibiz/finance — Fixed-Point Money, Tax Engine
-│   ├── commerce/          @intellibiz/commerce — Payments, Webhooks, WAL
-│   ├── identity/          @intellibiz/identity — User & Tenant Resolver
-│   ├── http/              @intellibiz/http    — Hono Transport Wrapper
-│   ├── cli/               @intellibiz/cli     — Cac & Clack Dev Tools
-│   └── intellibiz/        intellibiz          — Public Metapackage
-├── examples/
-│   └── flagship-store/    — Takealot/Amazon-scale E-Commerce Benchmark App
-├── pnpm-workspace.yaml
-├── turbo.json
-└── package.json
-```
-
-**Deliverables:**
-
-- `pnpm-workspace.yaml` with `packages/*`, `tools/*`, `examples/*`
-- `turbo.json` with `tasks` for `build`, `test`, `lint`, `clean` — build order respects `@intellibiz/core` first
-- Root `package.json` with `turbo`, `typescript`, `prettier`, `tsup` dev dependencies at latest versions
-- `tsconfig.base.json` with `strict`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`
-
-### 0.2 NAPI-RS Native Rust Crate
-
-Initialize the native Rust crate for CPU-intensive and cryptographic operations.
-
-**Target:** `packages/core/native/`
-
-```toml
-# packages/core/native/Cargo.toml
-[package]
-name = "intellibiz-native"
-version = "1.0.0"
-edition = "2021"
-
-[lib]
-crate-type = ["cdylib"]
-
-[dependencies]
-napi         = { version = "2.16.0", default-features = false, features = ["napi4", "async", "serde-json"] }
-napi-derive  = "2.16.0"
-rust_decimal = { version = "1.35.0", features = ["math-standard"] }
-sha2         = "0.10.8"
-parking_lot  = "0.12.1"
-serde        = { version = "1.0", features = ["derive"] }
-chrono       = { version = "0.4", features = ["serde"] }
-
-[build-dependencies]
-napi-build = "2.1.0"
-```
-
-**Native source structure:**
-
-```
-packages/core/native/src/
-├── lib.rs          — NAPI module entry point & exports
-├── ledger/
-│   ├── mod.rs
-│   ├── entry.rs    — LedgerEntry struct & SHA-256 block chaining
-│   └── wal.rs      — Write-Ahead Log ring buffer
-└── decimal/
-    └── mod.rs      — rust_decimal fixed-point bridge
-```
-
-### 0.3 Cross-Compilation CI Matrix
-
-GitHub Actions workflow (`.github/workflows/native-build.yml`) compiling `.node` binaries across all platforms:
-
-| Target Triple | Platform |
-|---|---|
-| `x86_64-unknown-linux-gnu` | Linux x64 |
-| `aarch64-unknown-linux-gnu` | Linux ARM64 / AWS Graviton |
-| `x86_64-apple-darwin` | macOS x64 / Intel |
-| `aarch64-apple-darwin` | macOS ARM64 / Apple Silicon |
-| `x86_64-pc-windows-msvc` | Windows x64 |
-
-Pre-compiled binaries are published as platform-specific optional npm packages. Developers do not need Rust installed.
-
-### 0.4 Metapackage Subpath Wiring
-
-Dual CJS/ESM export map in `packages/intellibiz/package.json`:
-
-```json
-{
-  "name": "intellibiz",
-  "exports": {
-    ".":         { "types": "./dist/index.d.ts",    "import": "./dist/index.mjs",    "require": "./dist/index.js" },
-    "./db":      { "types": "./dist/db.d.ts",       "import": "./dist/db.mjs",       "require": "./dist/db.js" },
-    "./finance": { "types": "./dist/finance.d.ts",  "import": "./dist/finance.mjs",  "require": "./dist/finance.js" },
-    "./commerce":{ "types": "./dist/commerce.d.ts", "import": "./dist/commerce.mjs", "require": "./dist/commerce.js" },
-    "./identity":{ "types": "./dist/identity.d.ts", "import": "./dist/identity.mjs", "require": "./dist/identity.js" },
-    "./config":  { "types": "./dist/config.d.ts",   "import": "./dist/config.mjs",   "require": "./dist/config.js" }
-  }
-}
-```
+1. **Fiscal Precision (Never Float):** All monetary operations use `@intellibiz/finance` fixed-point decimal arithmetic backed by Rust's 128-bit `rust_decimal` crate.
+2. **Context-Driven Security (Never Leaking):** Multi-tenancy and soft-delete filters are injected automatically at the kernel level.
+3. **Immutable Accountability (Never Unaudited):** All state-changing financial transactions write WAL journal blocks inside the Rust Native Audit Ledger.
+4. **Unrestricted Control (Never Blocked):** Developers retain full control through escape hatches (`db.sudo()`, `db.raw()`, `req.raw`).
+5. **Resilient Settlement (Never Lost):** All payment operations use an Idempotent Webhook Engine backed by a bank-reconciliation retry state machine.
 
 ---
 
-## Phase 1 — `@intellibiz/core`: Kernel, AsyncLocalStorage & Native Audit Ledger
+## Version History
 
-### 1.1 AsyncLocalStorage Context State Machine
+### Pre-Release (Development Phase)
 
-**File:** `packages/core/src/context/storage.ts`
+| Version | Tag | What Changed |
+|---------|-----|-------------|
+| **v0.1.0** | `v0.1.0` | Initial commit — project scaffolding and README |
+| **v0.2.0** | `v0.2.0` | Initialize pnpm monorepo, Turborepo, all packages, Rust crates, CI/CD |
+| **v0.3.0** | `v0.3.0` | Full structure: core, db, finance, commerce, identity, http, cli, examples |
+| **v0.4.0** | `v0.4.0` | Add all 10 RFCs (architecture decisions, API contracts, data models) |
+| **v0.5.0** | `v0.5.0` | Architecture docs: internals, context flow, Rust boundary, guides, API refs |
+| **v0.6.0** | `v0.6.0` | ROADMAP.md: Phase 0–6 blueprint, system invariants, V2 strategy |
+| **v0.7.0** | `v0.7.0` | SYNTAX_AND_LIBRARIES.md, Apache 2.0 license |
+| **v0.8.0** | `v0.8.0` | Full API reference docs for every package |
+| **v0.9.0** | `v0.9.0` | Tutorials, contributing, ADRs, system diagram, error registry, CHANGELOG |
+| **v0.10.0** | `v0.10.0` | Complete framework docs: RFC content, config-flags, security, performance |
 
-```typescript
-export interface IntellibizStore {
-  readonly traceId: string  // 'ibiz_trc_9918ab21cd'
-  tenantId?: string
-  userId?: string
-  readonly startTime: bigint  // process.hrtime.bigint()
-  readonly origin: 'http' | 'queue' | 'cron' | 'cli' | 'socket'
-}
-```
+### v1.0.x — Core Framework Build
 
-**Core functions:**
-- `createTraceId()` — High-entropy lexically sortable ID using `crypto.randomBytes`
-- `runInContext<T>(store, fn)` — Wraps execution in ALS store
-- `getContext()` — Returns current store or throws `ContextMissingError`
+| Version | Tag | What Changed |
+|---------|-----|-------------|
+| **v1.0.0** | `v1.0.0` | Restructure to V1-only layout: delete 17 V2 packages, rename database→db, strip V2 exports |
+| **v1.0.1** | `v1.0.1` | Fix package.json metadata across workspace |
+| **v1.0.2** | `v1.0.2` | Update all configs: TypeScript 7.0.2, Vitest 4.1.10, tsdown, node >=22 |
+| **v1.0.3** | `v1.0.3` | **Rewrite all 9 Rust crates** — ledger (SHA-256 chaining, ring buffer), formula-engine (rust_decimal), crypto (ed25519, aes-gcm), rule-engine (EU VAT), query-planner, permissions (bitmask RBAC), scheduler, serializer (zstd), NAPI-RS bindings |
+| **v1.0.4** | `v1.0.4` | Complete @intellibiz/testing package: mock-gateway, time-travel, tenant-context, ledger-assert |
+| **v1.0.5** | `v1.0.5` | Vitest configurations for all 7 packages |
+| **v1.0.6** | `v1.0.6` | Complete test suites: 332 TS tests (core: 113, db: 30, finance: 66, commerce: 48, identity: 52, http: 10) |
+| **v1.0.7** | `v1.0.7` | Documentation website (Next.js + Tailwind) |
+| **v1.0.8** | `v1.0.8` | DSL grammar specification |
+| **v1.0.9** | `v1.0.9` | **V1 features:** Stripe/PayFast/Ozow providers, db.sudo()/db.raw(), bank-retry, identity resolver, Zod config validation, metapackage subpath exports, flagship-store example |
 
-### 1.2 Specialized Context Implementation
+### v1.1.x — Testing & CI Hardening
 
-**File:** `packages/core/src/context/specialized/`
+| Version | Tag | What Changed |
+|---------|-----|-------------|
+| **v1.1.0** | `v1.1.0` | Tests for governance, providers, bank-retry, and resolver |
+| **v1.1.1** | `v1.1.1` | Fix GitHub build issues, cross-platform CI matrix |
 
-| Context | Extends store with |
-|---------|-------------------|
-| `RequestContext` | `body`, `params`, `query`, `headers`, `ip`, `method`, `url` |
-| `ActionContext` | `data`, `origin`, `result` |
-| `EventContext` | `name`, `payload`, `source`, `timestamp` |
-| `JobContext` | `id`, `queue`, `attempt`, `retry(delay)`, `fail(reason)` |
-| `TaskContext` | `runId`, `schedule`, `nextRun` |
-| `ApplicationContext` | `plugins`, `http`, `scheduler`, `queue` |
+### v1.2.x — Production Features
 
-All contexts automatically attach proxies for `db`, `log`, `ledger`, `money`, `tax`, `auth`, and `emit()` from the ALS store.
+| Version | Tag | What Changed |
+|---------|-----|-------------|
+| **v1.2.0** | `v1.2.0` | **Idempotent Webhooks & Bank State Machine:** webhook deduplication, 3D-Secure handling, background reconciliation, PayFast/Ozow plugins, rate limiter tests |
+| **v1.2.1** | `v1.2.1` | **Rate limiting, graceful shutdown, CI/CD, CLI init:** sliding window token bucket, HTTP graceful shutdown, @intellibiz/cli with Cac & Clack |
+| **v1.2.2** | `v1.2.2` | Fix ESM/CJS module resolution, commerce type corrections |
+| **v1.2.3** | `v1.2.3` | Fix website placeholders, standardize docs syntax |
 
-### 1.3 Context-Bound Pino Logger
+### v1.3.x — Cleanup & Polish
 
-**File:** `packages/core/src/logger/index.ts`
-
-Pino logger with ALS mixin that auto-injects `traceId` and `tenantId` into every log line:
-
-```json
-{
-  "level": 30,
-  "time": 1710000000000,
-  "traceId": "ibiz_trc_9918ab21cd",
-  "tenantId": "acme_corp",
-  "msg": "Payment authorized successfully"
-}
-```
-
-### 1.4 Rust Native Audit Ledger
-
-**File:** `packages/core/native/src/ledger/entry.rs`
-
-```rust
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct LedgerEntry {
-    pub id: String,
-    pub trace_id: String,
-    pub tenant_id: String,
-    pub account_debit: String,
-    pub account_credit: String,
-    pub amount: String,
-    pub currency: String,
-    pub timestamp: u64,
-    pub previous_hash: String,
-    pub hash: String,
-}
-```
-
-**SHA-256 block chaining:**
-
-```
-hash = SHA256(previous_hash + id + trace_id + account_debit + account_credit + amount + timestamp)
-```
-
-Each block's hash includes the previous block's hash — making retroactive modification of any entry detectable by recomputing the chain.
-
-**WAL Ring Buffer:** `parking_lot::RwLock`-backed in-memory queue that flushes append-only logs to disk asynchronously without blocking the Node.js event loop.
-
-### 1.5 Configuration Engine & Zod Validation
-
-**File:** `packages/core/src/config/`
-
-- Reads `intellibiz.config.ts` from project root via `tsx`
-- Validates against `IntellibizConfigSchema` (Zod)
-- On failure: clean terminal output listing exact misconfigured field paths — process does not start
-- Resolved config is frozen and injected into every context via `ctx.config`
+| Version | Tag | What Changed |
+|---------|-----|-------------|
+| **v1.3.0** | `v1.3.0` | Update .gitignore for website build artifacts |
 
 ---
 
-## Phase 2 — `@intellibiz/db`: Pure SQL Engine, Tenancy Isolation & Query Planner
+## Roadmap: Planned Future Releases
 
-### 2.1 Pure SQL Tagged Template Parser
+### v1.4.0 — Governance, Security & PII Protection
 
-**File:** `packages/db/src/sql/template.ts`
+- Implement `governance.excludeSensitive` (strip passwords/CVV from logs)
+- Implement `db.sudo()` and `db.raw()` with mandatory Rust Ledger audit events
+- Integrate `@intellibiz/http` rate-limiting (sliding window token bucket)
 
-```typescript
-import { getContext } from '@intellibiz/core'
-import { executeQuery } from '../driver/pool'
+### v1.5.0 — Advanced Database Adapters & Column Tenancy
 
-export async function sql(
-  strings: TemplateStringsArray,
-  ...values: unknown[]
-): Promise<unknown[]> {
-  const ctx = getContext()
-  let queryText = strings[0] ?? ''
-  const params: unknown[] = []
+- Release Kysely AST Column-Tenancy transformer (auto-append `org_id = ...`)
+- Separate database drivers into `@intellibiz/adapter-postgres`, `@intellibiz/adapter-mysql`, `@intellibiz/adapter-sqlite`
+- Introduce `db.mongo` and `db.kv` (Redis) namespaces
 
-  for (let i = 0; i < values.length; i++) {
-    params.push(values[i])
-    queryText += `$${i + 1}` + (strings[i + 1] ?? '')
-  }
+### v1.6.0 — Interactive CLI & Auto-Scaffolding
 
-  return executeQuery(queryText, params, ctx)
-}
-```
+- Release `@intellibiz/cli` built with Cac & Clack Prompts
+- Implement `npx intellibiz dev` Terminal User Interface (TUI)
+- Build Strategy Override auto-scaffolding (generating `./intellibiz/` files)
 
-Usage:
+### v1.7.0 — Virtual Testing Suite
 
-```typescript
-const products = await sql`SELECT * FROM products WHERE category = ${category}`
-```
+- Release `test.advanceTime()` for subscription/trial simulation
+- Release `test.mockGateway()` for offline Stripe/PayFast testing
+- Release `test.assertLedgerEntry()` for robust accounting unit tests
 
-### 2.2 Postgres Schema Isolation (`SET search_path`)
+### v1.8.0 — Digital Licensing, Invoicing & Compliance
 
-**File:** `packages/db/src/tenancy/schema.ts`
+- Release `@intellibiz/legal` module
+- Auto-generate PDF invoices via streaming
+- Implement Ed25519 cryptographic software license key issuance
+- Implement `privacy.gdpr` compliance (cascading user PII purge)
 
-When `tenancy.strategy: 'schema'` is configured, every connection checked out from the pool executes:
+### v1.9.0 — Distributed Scaling & Event Bus
 
-```sql
-SET search_path TO tenant_acme, public;
-```
+- Introduce Redis PubSub driver for multi-node event broadcasting
+- Implement W3C OpenTelemetry `traceparent` propagation
+- Add Prometheus metric endpoints (`core.metrics()`)
 
-This isolates access at the Postgres kernel layer before any developer SQL runs. No query transformation needed — isolation is enforced by the database engine itself.
+### v1.10.0 — Inventory & Logistics Basics
 
-### 2.3 Column Tenancy Transformer & Kysely Integration
+- Release `@intellibiz/inventory`
+- Implement stock locking/reservations (`inventory.reserve(items, ttl)`)
+- Add strict inventory mode (prevent overselling / race conditions)
 
-**File:** `packages/db/src/tenancy/column.ts`
+### v1.11.0 — Subscriptions & Recurring Billing (Dunning)
 
-When `tenancy.strategy: 'column'` is configured, the Kysely AST interceptor automatically appends:
+- Expand `@intellibiz/commerce` to handle recurring payment intents
+- Implement Automated Dunning (retry plans for failed subscription cards)
+- Event hooks for Trial Expirations and Plan Upgrades/Proration
 
-- `WHERE org_id = '{tenantId}'` to every `SELECT`, `UPDATE`, `DELETE`
-- `WHERE deleted_at IS NULL` to every `SELECT`
-- `org_id = '{tenantId}'` to every `INSERT`
+### v1.12.0 — Multi-Vendor Marketplace Primitives
 
-If `tenancy.strict: true` and no `tenantId` exists in the ALS store, throws `StrictTenancyViolationError` before SQL is sent to the driver.
+- Introduce `commerce.split()` for multi-party financial clearing
+- Calculate platform commissions and route split funds to multiple vendors
+- Escrow holding states pending delivery confirmations
 
-### 2.4 Governance Escape Hatches
+### v1.13.0 — Multi-Warehouse & Cross-Border Commerce
 
-**File:** `packages/db/src/governance/`
+- Implement optimal multi-warehouse order routing (`inventory.fulfill()`)
+- Add `@intellibiz/finance` cross-border duty/tariff estimation tools
+- Multi-currency dynamic exchange rate syncing
 
-```typescript
-export function sudo() {
-  const ctx = getContext()
-  recordGovernanceAudit(ctx, 'SUDO_ACCESS')
-  return createUnfilteredClient()
-}
-```
+### v1.14.0+ — Continuous V1.x Maintenance & Growth
 
-`db.sudo()` — Bypasses tenant and soft-delete filters. Requires `governance.allowSudo: true`. Writes `SUDO_ACCESS` audit entry to Rust ledger.
-
-`db.raw(sql)` — Executes raw SQL string bypassing all AST transformations. Writes `GOVERNANCE_RAW_QUERY` warning to Rust ledger.
-
-Both are visible as high-priority warnings in the governance dashboard.
+- Implement `@intellibiz/growth` (coupons, referrals, A/B pricing tests)
+- Implement visual web dashboard (`npx intellibiz dashboard`)
+- Ongoing performance tuning of Rust NAPI-RS bridge
+- Expand official plugin ecosystem
 
 ---
 
-## Phase 3 — `@intellibiz/finance`: Rust Fixed-Point Decimal & Tax Engine
-
-### 3.1 Rust `rust_decimal` Fixed-Point Bridge
-
-**File:** `packages/core/native/src/decimal/mod.rs`
-
-```rust
-use rust_decimal::Decimal;
-use std::str::FromStr;
-
-#[napi]
-pub fn decimal_add(a: String, b: String) -> String {
-    let dec_a = Decimal::from_str(&a).unwrap();
-    let dec_b = Decimal::from_str(&b).unwrap();
-    (dec_a + dec_b).to_string()
-}
-
-#[napi]
-pub fn decimal_multiply(a: String, factor: String) -> String {
-    let dec_a = Decimal::from_str(&a).unwrap();
-    let dec_b = Decimal::from_str(&factor).unwrap();
-    (dec_a * dec_b).to_string()
-}
-
-#[napi]
-pub fn decimal_subtract(a: String, b: String) -> String {
-    let dec_a = Decimal::from_str(&a).unwrap();
-    let dec_b = Decimal::from_str(&b).unwrap();
-    (dec_a - dec_b).to_string()
-}
-```
-
-### 3.2 TypeScript `Money` Class
-
-**File:** `packages/finance/src/money.ts`
-
-```typescript
-import { decimalAdd, decimalMultiply, decimalSubtract } from '@intellibiz/core/native'
-
-export class Money {
-  private readonly _amount: string
-  readonly currency: string
-
-  constructor(amount: number | string, currency = 'USD') {
-    this._amount = typeof amount === 'number' ? amount.toFixed(4) : amount
-    this.currency = currency.toUpperCase()
-  }
-
-  add(other: Money): Money {
-    this.assertSameCurrency(other)
-    return new Money(decimalAdd(this._amount, other._amount), this.currency)
-  }
-
-  subtract(other: Money): Money {
-    this.assertSameCurrency(other)
-    return new Money(decimalSubtract(this._amount, other._amount), this.currency)
-  }
-
-  multiply(factor: number | string): Money {
-    return new Money(decimalMultiply(this._amount, String(factor)), this.currency)
-  }
-
-  get amount(): string {
-    return Number(this._amount).toFixed(2)
-  }
-
-  format(locale = 'en-US'): string {
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: this.currency,
-    }).format(Number(this._amount))
-  }
-
-  private assertSameCurrency(other: Money) {
-    if (this.currency !== other.currency) {
-      throw new Error(`Currency mismatch: ${this.currency} vs ${other.currency}`)
-    }
-  }
-}
-
-export function money(amount: number | string, currency?: string): Money {
-  return new Money(amount, currency)
-}
-```
-
-### 3.3 ISO-4217 Currency Registry
-
-**File:** `packages/finance/src/currency/`
-
-Currency decimal precision lookup for correct minor unit handling:
-
-| Currency | Decimals | Example |
-|----------|----------|---------|
-| USD, EUR, ZAR, GBP | 2 | `$10.99` |
-| JPY, KRW | 0 | `¥1099` |
-| BHD, KWD | 3 | `1.099 BHD` |
-
-### 3.4 Regional VAT/GST Tax Calculator
-
-**File:** `packages/finance/src/tax/`
-
-```typescript
-export async function calculateTotal(params: {
-  items: Array<{ price: Money; quantity: number }>
-  taxRate?: number
-  destination?: { country: string; state?: string }
-}): Promise<{ subtotal: Money; taxTotal: Money; grandTotal: Money }>
-```
-
-Tax rates are resolved in this order:
-1. Explicit `taxRate` parameter
-2. Override file (`intellibiz/tax-rules.ts`) if `overrides.taxCalculation: true`
-3. Internal regional rate table (VAT by EU country, GST by region)
-4. Zero (`0`) if no rate applies
-
----
-
-## Phase 4 — `@intellibiz/identity`: User Resolution & Tenant Security
-
-### 4.1 JWT Verification Subsystem
-
-**File:** `packages/identity/src/jwt.ts`
-
-Uses `jose` to verify RS256 and HS256 JWT tokens from `Authorization: Bearer <token>`. Extracts `sub` (userId), `tenant_id`, and `roles` claims.
-
-### 4.2 Configurable Tenant Resolution Pipeline
-
-**File:** `packages/identity/src/resolver.ts`
-
-Resolution order:
-
-1. Custom `tenancy.resolve(req)` callback in `intellibiz.config.ts`
-2. Inbound HTTP headers: `x-tenant-id`, `x-user-id`
-3. Decoded JWT claims: `tenant_id`, `sub`
-4. Host subdomain matching: `acme.platform.com` → `tenantId: 'acme'`
-
-If no tenant resolves and `tenancy.strict: true` → `StrictTenancyViolationError` before any handler runs.
-
-### 4.3 Identity Context Accessors
-
-**File:** `packages/identity/src/index.ts`
-
-```typescript
-identity.getActiveUser()    // → { id, email, roles } from ALS context
-identity.getActiveTenant()  // → { id, slug, config } from ALS context
-identity.can(permission)    // → boolean via Rust bitmask engine
-identity.deleteUser(id, options) // → GDPR cascading purge
-```
-
----
-
-## Phase 5 — `@intellibiz/commerce`: Payments, Idempotent Webhooks & WAL State Machine
-
-### 5.1 Universal Payment Provider Contract
-
-**File:** `packages/commerce/src/providers/base.ts`
-
-```typescript
-export interface PaymentProvider {
-  readonly name: string
-  charge(params: ChargeParams): Promise<ChargeResult>
-  verifyWebhookSignature(req: RequestContext): Promise<boolean>
-  parseWebhookEvent(req: RequestContext): Promise<WebhookEvent>
-}
-
-export interface ChargeResult {
-  id: string
-  status: 'SUCCEEDED' | 'PENDING_BANK_RECONCILIATION' | 'FAILED'
-  rawResponse: unknown
-}
-```
-
-**V1 Built-in Adapters:**
-- `StripeProvider` — `packages/commerce/src/providers/stripe.ts`
-- `PayFastOzowProvider` — `packages/commerce/src/providers/payfast-ozow.ts` (Instant EFT for South Africa)
-
-### 5.2 Idempotent Webhook Engine
-
-**File:** `packages/commerce/src/webhooks/dedup.ts`
-
-Processing pipeline:
-
-1. Validate incoming webhook cryptographic signature using provider's public key
-2. Extract unique webhook event ID (`evt_...`)
-3. Check deduplication cache: in-memory LRU or Redis key `ibiz_wh_evt_{id}`
-4. If key exists → log `DUPLICATE_WEBHOOK_IGNORED`, return `HTTP 200 OK` immediately
-5. If key is new → process event, store key with 24-hour expiration
-
-### 5.3 Bank Retry State Machine
-
-**File:** `packages/commerce/src/state-machine/`
-
-When a bank times out (`BANK_TIMEOUT_UNKNOWN_STATE`):
-
-1. Mark transaction status as `PENDING_BANK_RECONCILIATION` in the ledger
-2. Register a background task that polls the bank status API every 60 seconds
-3. Continue polling for up to 24 hours
-4. On final confirmation: mark `SUCCEEDED` or `FAILED`, execute compensating actions if failed
-
-### 5.4 Atomic Business Transactions
-
-**File:** `packages/commerce/src/transaction.ts`
-
-```typescript
-export async function transaction<T>(
-  fn: (tx: CommerceTransactionContext) => Promise<T>
-): Promise<T> {
-  const ctx = getContext()
-  const walId = await appendWalIntent(ctx)
-
-  try {
-    const result = await fn(createTxContext(ctx))
-    await commitWalIntent(walId)
-    return result
-  } catch (error) {
-    await executeCompensatingActions(walId)
-    await rollbackWalIntent(walId, error)
-    throw error
-  }
-}
-```
-
-Each `tx.*` call registers its compensating action before executing. On any failure, compensating actions run in reverse registration order.
-
----
-
-## Phase 6 — `@intellibiz/testing` & Launch Readiness
-
-### 6.1 Virtual Testing Utilities
-
-**File:** `packages/testing/src/`
-
-```typescript
-test.advanceTime('30d')                      // Virtual clock progression
-test.mockGateway('stripe', responses)        // Intercept payment adapter network calls
-test.withTenant(tenantId, fn)                // Set ALS tenant for test duration
-test.assertLedgerEntry(filter)               // Assert presence of ledger blocks
-mockPayments.failNext({ code: 'card_declined' }) // Force next charge to fail
-mockPayments.spyRefund()                     // Spy on compensating refund calls
-```
-
-### 6.2 E-Commerce Reference Application
-
-**Location:** `examples/flagship-store/`
-
-Demonstrates:
-- `intellibiz.config.ts` flag configuration
-- Customer registration and tenant binding
-- Pure SQL product catalog (`sql\`SELECT * FROM products WHERE category = ${cat}\``)
-- Atomic checkout via `commerce.transaction()`
-- Webhook callback processing for Stripe and PayFast/Ozow EFT events
-- Multi-tenancy isolation verification
-
-### 6.3 Release Pipeline
-
-- Changesets (`@changesets/cli`) for versioned package publishing
-- CI runs `npx changeset version` and `npx changeset publish` on merge to `main`
-- Published to npm under **Apache License 2.0**
-
----
-
-## V2 Expansion Strategy
-
-After V1 ships **The Shippable Five**, these packages form the V2 roadmap:
-
-| Package | Capability |
-|---------|-----------|
-| `@intellibiz/governance` | Full audit dashboard, P&L reports, ledger verification |
-| `@intellibiz/legal` | EULA signatures, GDPR cascading purge, license keys |
-| `@intellibiz/inventory` | SKU management, warehouse, stock reservation |
-| `@intellibiz/queue` | Background job queue, retry policies |
-| `@intellibiz/scheduler` | Cron jobs, TaskContext, timer wheels |
-| `@intellibiz/mail` | Transactional email with provider adapters |
-| `@intellibiz/growth` | Referrals, coupons, A/B testing, affiliate tracking |
-| `@intellibiz/metrics` | Prometheus, OpenTelemetry, health checks |
-| `@intellibiz/ai` | AI provider adapters (OpenAI, Anthropic) |
-| `@intellibiz/plugin-*` | Stripe, Redis, S3, PostgreSQL, OpenAI plugin packages |
-
----
-
-## Implementation Sequence
-
-```
-Phase 0 — Workspace & Native FFI      (Week 1)
-Phase 1 — @intellibiz/core Kernel     (Weeks 2-3)
-Phase 2 — @intellibiz/db SQL Engine   (Week 4)
-Phase 3 — @intellibiz/finance Money   (Week 5)
-Phase 4 — @intellibiz/identity Auth   (Week 6)
-Phase 5 — @intellibiz/commerce Tx     (Weeks 7-8)
-Phase 6 — Testing & Launch Readiness  (Week 9)
-```
-
-Each phase depends on the previous. `@intellibiz/core` must be built and tested before any other package begins. The native Rust crate must compile successfully before Phase 1 completes.
+## SemVer Rules
+
+1. **PATCH** (v1.x.1, v1.x.2): Bug fixes, security patches, dependency bumps, Rust optimizations. Zero API changes.
+2. **MINOR** (v1.1.0, v1.2.0): New features (packages, config flags, CLI tools). 100% backward compatible.
+3. **SECURITY**: Vulnerabilities in tenancy injector, Rust ledger, or JWT verifier → CVE + hotfix on `main` + immediate patch release.
 
 ---
 

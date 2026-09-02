@@ -1,8 +1,8 @@
 {
 	"name": "intellibiz",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": false,
-  "type": "module",
+	"type": "module",
 	"description": "Intellibiz — Business Application Engine. The public face of the V1 framework.",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
@@ -13,15 +13,20 @@
 			"require": "./dist/index.cjs",
 			"types": "./dist/index.d.mts"
 		},
-		"./commerce": {
-			"import": "./dist/commerce.mjs",
-			"require": "./dist/commerce.cjs",
-			"types": "./dist/commerce.d.mts"
+		"./db": {
+			"import": "./dist/db.mjs",
+			"require": "./dist/db.cjs",
+			"types": "./dist/db.d.mts"
 		},
 		"./finance": {
 			"import": "./dist/finance.mjs",
 			"require": "./dist/finance.cjs",
 			"types": "./dist/finance.d.mts"
+		},
+		"./commerce": {
+			"import": "./dist/commerce.mjs",
+			"require": "./dist/commerce.cjs",
+			"types": "./dist/commerce.d.mts"
 		},
 		"./identity": {
 			"import": "./dist/identity.mjs",
@@ -39,10 +44,12 @@
 			"types": "./dist/config.d.mts"
 		}
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
-		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch",
+		"build": "tsdown src/index.ts src/db.ts src/finance.ts src/commerce.ts src/identity.ts src/http.ts src/config.ts --format esm,cjs --dts --clean",
+		"dev": "tsdown src/index.ts src/db.ts src/finance.ts src/commerce.ts src/identity.ts src/http.ts src/config.ts --format esm,cjs --dts --watch",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
 		"lint": "tsc --noEmit",

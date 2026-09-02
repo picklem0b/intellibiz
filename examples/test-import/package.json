@@ -1,0 +1,15 @@
+{
+  "name": "test-intellibiz-import",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end import test for the intellibiz package",
+  "scripts": {
+    "test": "node --experimental-vm-modules test.mjs",
+    "test:cjs": "node test.cjs",
+    "test:subpath": "node test-subpath.mjs"
+  },
+  "dependencies": {
+    "intellibiz": "workspace:*"
+  }
+}

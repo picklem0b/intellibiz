@@ -1,8 +1,8 @@
 {
 	"name": "@intellibiz/core",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": false,
-  "type": "module",
+	"type": "module",
 	"description": "Intellibiz kernel — ALS context, defineAction, defineConfig, definePlugin",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
@@ -14,7 +14,10 @@
 			"types": "./dist/index.d.mts"
 		}
 	},
-	"files": ["dist", "*.node"],
+	"files": [
+		"dist",
+		"*.node"
+	],
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
 		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch",

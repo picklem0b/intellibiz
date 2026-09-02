@@ -1,8 +1,8 @@
 {
 	"name": "@intellibiz/db",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": false,
-  "type": "module",
+	"type": "module",
 	"description": "Intellibiz database layer — sql tagged templates, Kysely proxy, tenant query planner",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
@@ -14,7 +14,9 @@
 			"types": "./dist/index.d.mts"
 		}
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
 		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch",

@@ -1,14 +1,17 @@
 {
-	"name": "create-intellibiz",
-	"version": "1.0.0",
+	"name": "@intellibiz/create-intellibiz",
+	"version": "1.0.1",
 	"private": false,
-  "type": "module",
+	"type": "module",
 	"description": "Create a new Intellibiz project with npx create-intellibiz",
 	"main": "./dist/index.cjs",
 	"bin": {
 		"create-intellibiz": "./dist/index.cjs"
 	},
-	"files": ["dist", "README.md"],
+	"files": [
+		"dist",
+		"README.md"
+	],
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
 		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch"

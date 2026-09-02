@@ -1,8 +1,8 @@
 {
 	"name": "@intellibiz/http",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": false,
-  "type": "module",
+	"type": "module",
 	"description": "Intellibiz HTTP — Hono wrapper, RequestContext, middleware, routing",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
@@ -14,7 +14,9 @@
 			"types": "./dist/index.d.mts"
 		}
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
 		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch",

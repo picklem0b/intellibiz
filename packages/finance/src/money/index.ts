@@ -1,41 +1,12 @@
 import { Decimal } from 'decimal.js';
+import { getCurrencyDecimals } from '../money/precision.js';
 
 // Configure decimal.js to match Rust formula-engine behaviour:
 // 28 significant digits, ROUND_HALF_EVEN (Banker's rounding)
 Decimal.set({ precision: 28, rounding: 6 as const });
 
-// ─── Currency Precision Map ───────────────────────────────────────────────────
-
-const CURRENCY_DECIMALS: Record<string, number> = {
-	// Zero decimal
-	JPY: 0,
-	KRW: 0,
-	VND: 0,
-	ISK: 0,
-	CLP: 0,
-	GNF: 0,
-	UGX: 0,
-	RWF: 0,
-	BIF: 0,
-	DJF: 0,
-	KMF: 0,
-	MGA: 0,
-	PYG: 0,
-	XAF: 0,
-	XOF: 0,
-	XPF: 0,
-	// Three decimal
-	BHD: 3,
-	KWD: 3,
-	OMR: 3,
-	JOD: 3,
-	TND: 3,
-	LYD: 3
-};
-
-export function getCurrencyDecimals(currency: string): number {
-	return CURRENCY_DECIMALS[currency.toUpperCase()] ?? 2;
-}
+// Re-export for convenience
+export { getCurrencyDecimals };
 
 // ─── Money ────────────────────────────────────────────────────────────────────
 
