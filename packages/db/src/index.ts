@@ -11,3 +11,7 @@ export {
 	clearGovernanceLog as clearDetailedGovernanceLog
 } from './governance/sudo.js';
 export type { GovernanceRecord as DetailedGovernanceRecord } from './governance/sudo.js';
+
+// ─── Column-Tenancy Transformer ────────────────────────────────────────────
+export { createColumnTenancy } from './tenancy/column.js';
+export type { ColumnTenancyConfig, QueryContext } from './tenancy/column.js';

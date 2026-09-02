@@ -29,3 +29,7 @@ export const finance = {
 	CurrencyMismatchError: (a: string, b: string) =>
 		new CurrencyMismatchError(a, b)
 };
+
+// ─── Cross-Border Commerce ──────────────────────────────────────────────────
+export { estimateDuty, exchangeRates } from './cross-border.js';
+export type { DutyEstimate, ExchangeRate, TariffEntry } from './cross-border.js';

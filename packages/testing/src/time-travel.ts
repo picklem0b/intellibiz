@@ -1,135 +1,112 @@
-// ─── Virtual Clock ──────────────────────────────────────────────────────────
-// Provides deterministic time control for tests that depend on Date.now(),
-// setTimeout, setInterval, or time-sensitive business logic (subscriptions,
-// token expiry, billing cycles, license renewal).
+// ─── Virtual Time Travel ────────────────────────────────────────────────────
+// test.advanceTime() for subscription/trial simulation.
 
-let _offset = 0;
-let _frozenAt: number | null = null;
-const _originalDateNow = Date.now.bind(Date);
-const _originalDate = Date;
+// ─── State ──────────────────────────────────────────────────────────────────
+
+let virtualOffset = 0;
+let frozenTime: number | null = null;
+const originalDateNow = Date.now;
+
+// ─── Time Travel API ────────────────────────────────────────────────────────
+
+/**
+ * Advance virtual time by a duration string.
+ *
+ * @example
+ * test.advanceTime('30d')   // skip 30 days forward
+ * test.advanceTime('2h')    // skip 2 hours forward
+ * test.advanceTime('1y')    // skip 1 year forward
+ */
+export function advanceTime(duration: string): Date {
+	const ms = parseDuration(duration);
+	virtualOffset += ms;
+	return getVirtualNow();
+}
+
+/**
+ * Set virtual time to a specific date.
+ */
+export function setTime(date: Date | string | number): Date {
+	const target = typeof date === 'string' ? new Date(date).getTime() :
+		typeof date === 'number' ? date : date.getTime();
+	virtualOffset = target - originalDateNow();
+	return getVirtualNow();
+}
+
+/**
+ * Freeze time at the current moment. All subsequent Date.now() calls
+ * return the same value until thawTime() is called.
+ */
+export function freezeTime(): Date {
+	frozenTime = getVirtualNow().getTime();
+	return getVirtualNow();
+}
+
+/**
+ * Unfreeze time and resume normal progression (from where it was frozen).
+ */
+export function thawTime(): Date {
+	frozenTime = null;
+	return getVirtualNow();
+}
+
+/**
+ * Reset virtual time to real time.
+ */
+export function resetTime(): void {
+	virtualOffset = 0;
+	frozenTime = null;
+}
+
+/**
+ * Get the current virtual time.
+ */
+export function getVirtualNow(): Date {
+	if (frozenTime !== null) return new Date(frozenTime);
+	return new Date(originalDateNow() + virtualOffset);
+}
+
+// ─── Duration Parser ────────────────────────────────────────────────────────
 
 function parseDuration(duration: string): number {
-	const match = duration.match(/^(\d+)(ms|s|m|h|d|w|y)$/);
-	if (!match) {
-		throw new Error(
-			`Invalid duration format: '${duration}'. Use '30d', '2h', '15m', '1y', '500ms', '30s', '2w'.`
-		);
+	const match = duration.match(/^(\d+)\s*(ms|s|m|h|d|w|mo|y)$/);
+	if (!match) throw new Error(`Invalid duration: ${duration}. Use format: 30d, 2h, 1y`);
+
+	const value = parseInt(match[1]!, 10);
+	const unit = match[2];
+
+	switch (unit) {
+		case 'ms': return value;
+		case 's': return value * 1000;
+		case 'm': return value * 60 * 1000;
+		case 'h': return value * 60 * 60 * 1000;
+		case 'd': return value * 24 * 60 * 60 * 1000;
+		case 'w': return value * 7 * 24 * 60 * 60 * 1000;
+		case 'mo': return value * 30 * 24 * 60 * 60 * 1000;
+		case 'y': return value * 365 * 24 * 60 * 60 * 1000;
+		default: throw new Error(`Unknown duration unit: ${unit}`);
 	}
-	const [, amount, unit] = match;
-	const n = parseInt(amount!, 10);
-	const ms: Record<string, number> = {
-		ms: n,
-		s: n * 1_000,
-		m: n * 60_000,
-		h: n * 3_600_000,
-		d: n * 86_400_000,
-		w: n * 604_800_000,
-		y: n * 31_536_000_000
+}
+
+// ─── Monkey-patch Date.now ──────────────────────────────────────────────────
+
+/**
+ * Install the virtual time override on Date.now.
+ * Call this at the start of your test suite.
+ */
+export function installTimeTravel(): void {
+	Date.now = () => {
+		if (frozenTime !== null) return frozenTime;
+		return originalDateNow() + virtualOffset;
 	};
-	return ms[unit!]!;
 }
 
 /**
- * Returns the virtual current time in milliseconds.
- * Respects both offset-based advance() and freeze-based freeze().
+ * Restore Date.now to the real implementation.
+ * Call this at the end of your test suite.
  */
-export function virtualNow(): number {
-	if (_frozenAt !== null) return _frozenAt;
-	return _originalDateNow() + _offset;
+export function restoreTime(): void {
+	Date.now = originalDateNow;
+	virtualOffset = 0;
+	frozenTime = null;
 }
-
-/**
- * Installs a global Date.now override that returns virtual time.
- * Call once at the top of a test file or in beforeAll.
- */
-export function installVirtualClock(): void {
-	Date.now = virtualNow;
-}
-
-/**
- * Restores the original Date.now.
- * Call in afterAll or afterEach to clean up.
- */
-export function restoreRealClock(): void {
-	Date.now = _originalDateNow;
-	_offset = 0;
-	_frozenAt = null;
-}
-
-/**
- * Advances the virtual clock by the given duration.
- * Subsequent calls to Date.now() and virtualNow() will reflect the advance.
- *
- * @example
- * time.advance('30d')   // moves forward 30 days
- * time.advance('2h')    // moves forward 2 more hours
- */
-export function advance(duration: string): void {
-	_offset += parseDuration(duration);
-}
-
-/**
- * Sets the virtual clock to a specific absolute timestamp (ms since epoch).
- *
- * @example
- * time.freeze(1700000000000)  // freeze at 2023-11-14T22:13:20.000Z
- */
-export function freeze(timestampMs: number): void {
-	_frozenAt = timestampMs;
-	_offset = timestampMs - _originalDateNow();
-}
-
-/**
- * Advances from the current frozen time by the given duration.
- */
-export function advanceFromFrozen(duration: string): void {
-	if (_frozenAt === null) {
-		throw new Error('advanceFromFrozen: clock is not frozen. Call time.freeze() first.');
-	}
-	_frozenAt += parseDuration(duration);
-}
-
-/**
- * Returns a Date object at the virtual current time.
- */
-export function virtualDate(): Date {
-	return new _originalDate(virtualNow());
-}
-
-/**
- * Returns the offset in milliseconds from real time.
- */
-export function getOffset(): number {
-	return _offset;
-}
-
-/**
- * Resets the virtual clock completely — clears offset and unfreezes.
- */
-export function reset(): void {
-	_offset = 0;
-	_frozenAt = null;
-}
-
-/**
- * Convenience object for test scripts.
- *
- * @example
- * import { time } from '@intellibiz/testing'
- *
- * it('handles subscription expiry', async () => {
- *   time.advance('31d')
- *   await checkSubscriptions()
- * })
- */
-export const time = {
-	advance,
-	freeze,
-	advanceFromFrozen,
-	virtualNow,
-	virtualDate,
-	getOffset,
-	reset,
-	installVirtualClock,
-	restoreRealClock
-};

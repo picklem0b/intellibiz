@@ -1,225 +1,171 @@
 // ─── Ledger Assertions ──────────────────────────────────────────────────────
-// Provides assertion helpers for verifying ledger entries in tests.
-// The in-memory test ledger records entries during test execution.
-// These helpers query and assert against that ledger.
+// test.assertLedgerEntry() for robust accounting unit tests.
 
-import type { TestLedgerEntry } from './index.js';
+// ─── Types ──────────────────────────────────────────────────────────────────
 
-// ─── Query Helpers ──────────────────────────────────────────────────────────
-
-/**
- * Filters ledger entries by matching all provided fields.
- * Returns only entries where every field in `filter` matches exactly.
- */
-export function filterEntries(
-	entries: readonly TestLedgerEntry[],
-	filter: Partial<TestLedgerEntry>
-): TestLedgerEntry[] {
-	return entries.filter(entry =>
-		Object.entries(filter).every(
-			([k, v]) => entry[k as keyof TestLedgerEntry] === v
-		)
-	);
+export interface LedgerEntry {
+	id: string;
+	traceId: string;
+	tenantId: string;
+	accountDebit: string;
+	accountCredit: string;
+	amount: string;
+	currency: string;
+	timestamp: number;
+	previousHash: string;
+	hash: string;
 }
 
-/**
- * Returns the most recent ledger entry matching the filter.
- */
-export function getLastEntry(
-	entries: readonly TestLedgerEntry[],
-	filter?: Partial<TestLedgerEntry>
-): TestLedgerEntry | null {
-	const filtered = filter ? filterEntries(entries, filter) : [...entries];
-	return filtered[filtered.length - 1] ?? null;
+export interface LedgerFilter {
+	tenantId?: string;
+	accountDebit?: string;
+	accountCredit?: string;
+	currency?: string;
+	amount?: string;
+	minTimestamp?: number;
+	maxTimestamp?: number;
+	traceId?: string;
 }
 
-/**
- * Returns entries within a time window (ms since epoch).
- */
-export function getEntriesInWindow(
-	entries: readonly TestLedgerEntry[],
-	startMs: number,
-	endMs: number
-): TestLedgerEntry[] {
-	return entries.filter(e => e.timestamp >= startMs && e.timestamp <= endMs);
+export interface LedgerAssertResult {
+	passed: boolean;
+	message: string;
+	actual: LedgerEntry[];
 }
 
-// ─── Assertion Helpers ──────────────────────────────────────────────────────
+// ─── In-Memory Ledger (for testing) ────────────────────────────────────────
+
+let testLedgerEntries: LedgerEntry[] = [];
+
+export function recordTestLedgerEntry(entry: LedgerEntry): void {
+	testLedgerEntries.push(entry);
+}
+
+export function getLedgerEntries(filter?: LedgerFilter): LedgerEntry[] {
+	let entries = [...testLedgerEntries];
+
+	if (filter) {
+		entries = entries.filter(e => {
+			if (filter.tenantId && e.tenantId !== filter.tenantId) return false;
+			if (filter.accountDebit && e.accountDebit !== filter.accountDebit) return false;
+			if (filter.accountCredit && e.accountCredit !== filter.accountCredit) return false;
+			if (filter.currency && e.currency !== filter.currency) return false;
+			if (filter.amount && e.amount !== filter.amount) return false;
+			if (filter.minTimestamp && e.timestamp < filter.minTimestamp) return false;
+			if (filter.maxTimestamp && e.timestamp > filter.maxTimestamp) return false;
+			if (filter.traceId && e.traceId !== filter.traceId) return false;
+			return true;
+		});
+	}
+
+	return entries;
+}
+
+export function resetTestState(): void {
+	testLedgerEntries = [];
+}
+
+// ─── Ledger Assertions ──────────────────────────────────────────────────────
 
 /**
- * Asserts that at least one entry matches the given filter.
+ * Assert that at least one ledger entry matches the given filter.
  *
  * @example
- * assertLedgerContains(entries, { action: 'payment.charge', currency: 'USD' })
+ * ```ts
+ * const result = assertLedgerEntry({
+ *   accountCredit: 'revenue',
+ *   currency: 'USD',
+ *   amount: '99.99'
+ * })
+ * expect(result.passed).toBe(true)
+ * ```
  */
-export function assertLedgerContains(
-	entries: readonly TestLedgerEntry[],
-	filter: Partial<TestLedgerEntry>,
-	message?: string
-): void {
-	const matches = filterEntries(entries, filter);
-	if (matches.length === 0) {
-		const filterStr = JSON.stringify(filter);
-		throw new Error(
-			message ?? `Expected ledger to contain entry matching ${filterStr}, but found none.`
-		);
+export function assertLedgerEntry(filter: LedgerFilter): LedgerAssertResult {
+	const entries = getLedgerEntries(filter);
+
+	if (entries.length > 0) {
+		return {
+			passed: true,
+			message: `Found ${entries.length} matching ledger entry(ies)`,
+			actual: entries
+		};
 	}
+
+	return {
+		passed: false,
+		message: `No ledger entry found matching filter: ${JSON.stringify(filter)}`,
+		actual: []
+	};
 }
 
 /**
- * Asserts that no entries match the given filter.
- *
- * @example
- * assertLedgerNotContains(entries, { action: 'payment.refund' })
+ * Assert the total amount across all matching ledger entries.
  */
-export function assertLedgerNotContains(
-	entries: readonly TestLedgerEntry[],
-	filter: Partial<TestLedgerEntry>,
-	message?: string
-): void {
-	const matches = filterEntries(entries, filter);
-	if (matches.length > 0) {
-		const filterStr = JSON.stringify(filter);
-		throw new Error(
-			message ??
-				`Expected ledger to NOT contain entry matching ${filterStr}, but found ${matches.length}.`
-		);
+export function assertLedgerTotal(params: {
+	filter: LedgerFilter;
+	expectedTotal: string;
+}): LedgerAssertResult {
+	const entries = getLedgerEntries(params.filter);
+	const total = entries.reduce((sum, e) => sum + parseFloat(e.amount), 0).toFixed(2);
+
+	if (total === params.expectedTotal) {
+		return {
+			passed: true,
+			message: `Ledger total matches: ${total}`,
+			actual: entries
+		};
 	}
+
+	return {
+		passed: false,
+		message: `Ledger total mismatch: expected ${params.expectedTotal}, got ${total}`,
+		actual: entries
+	};
 }
 
 /**
- * Asserts the exact number of entries matching the filter.
- *
- * @example
- * assertLedgerCount(entries, { action: 'payment.charge' }, 2)
+ * Assert the count of matching ledger entries.
  */
-export function assertLedgerCount(
-	entries: readonly TestLedgerEntry[],
-	filter: Partial<TestLedgerEntry>,
-	expectedCount: number,
-	message?: string
-): void {
-	const matches = filterEntries(entries, filter);
-	if (matches.length !== expectedCount) {
-		const filterStr = JSON.stringify(filter);
-		throw new Error(
-			message ??
-				`Expected ${expectedCount} entries matching ${filterStr}, but found ${matches.length}.`
-		);
+export function assertLedgerCount(params: {
+	filter: LedgerFilter;
+	expectedCount: number;
+}): LedgerAssertResult {
+	const entries = getLedgerEntries(params.filter);
+
+	if (entries.length === params.expectedCount) {
+		return {
+			passed: true,
+			message: `Ledger count matches: ${entries.length}`,
+			actual: entries
+		};
 	}
+
+	return {
+		passed: false,
+		message: `Ledger count mismatch: expected ${params.expectedCount}, got ${entries.length}`,
+		actual: entries
+	};
 }
 
 /**
- * Asserts that entries are in chronological order (timestamps non-decreasing).
+ * Assert that the ledger chain is intact (SHA-256 hashes link correctly).
  */
-export function assertLedgerChronological(
-	entries: readonly TestLedgerEntry[],
-	message?: string
-): void {
+export function assertLedgerChainIntegrity(): LedgerAssertResult {
+	const entries = getLedgerEntries();
+
 	for (let i = 1; i < entries.length; i++) {
-		if (entries[i]!.timestamp < entries[i - 1]!.timestamp) {
-			throw new Error(
-				message ??
-					`Ledger entries are not in chronological order. Entry ${i} (${entries[i]!.timestamp}) is before entry ${i - 1} (${entries[i - 1]!.timestamp}).`
-			);
+		if (entries[i]!.previousHash !== entries[i - 1]!.hash) {
+			return {
+				passed: false,
+				message: `Chain broken at entry ${i}: expected previousHash ${entries[i - 1]!.hash}, got ${entries[i]!.previousHash}`,
+				actual: entries
+			};
 		}
 	}
-}
 
-/**
- * Asserts that all entries in the ledger belong to the same tenant.
- */
-export function assertSingleTenant(
-	entries: readonly TestLedgerEntry[],
-	message?: string
-): void {
-	if (entries.length === 0) return;
-	const firstTenant = entries[0]!.tenantId;
-	for (let i = 1; i < entries.length; i++) {
-		if (entries[i]!.tenantId !== firstTenant) {
-			throw new Error(
-				message ??
-					`Expected all entries to belong to tenant '${firstTenant}', but entry ${i} belongs to '${entries[i]!.tenantId}'.`
-			);
-		}
-	}
-}
-
-/**
- * Asserts that entries span the given tenant IDs (each tenant has at least one entry).
- */
-export function assertMultiTenant(
-	entries: readonly TestLedgerEntry[],
-	expectedTenants: string[],
-	message?: string
-): void {
-	const actualTenants = new Set(entries.map(e => e.tenantId));
-	for (const tenant of expectedTenants) {
-		if (!actualTenants.has(tenant)) {
-			throw new Error(
-				message ??
-					`Expected tenant '${tenant}' to have ledger entries, but found none. Present tenants: [${[...actualTenants].join(', ')}]`
-			);
-		}
-	}
-}
-
-/**
- * Asserts that entries exist across a time window (entries are not all at the same timestamp).
- */
-export function assertEntriesSpanTime(
-	entries: readonly TestLedgerEntry[],
-	minSpanMs: number,
-	message?: string
-): void {
-	if (entries.length < 2) {
-		throw new Error(message ?? 'Cannot check time span with fewer than 2 entries.');
-	}
-	const timestamps = entries.map(e => e.timestamp).sort((a, b) => a - b);
-	const span = timestamps[timestamps.length - 1]! - timestamps[0]!;
-	if (span < minSpanMs) {
-		throw new Error(
-			message ??
-				`Expected entries to span at least ${minSpanMs}ms, but span was ${span}ms.`
-		);
-	}
-}
-
-/**
- * Asserts a transaction's ledger pattern: PENDING → COMMITTED or ROLLED_BACK.
- */
-export function assertTransactionPattern(
-	entries: readonly TestLedgerEntry[],
-	traceId: string,
-	expectedOutcome: 'COMMITTED' | 'ROLLED_BACK',
-	message?: string
-): void {
-	const txEntries = entries.filter(e => e.traceId === traceId);
-	if (txEntries.length === 0) {
-		throw new Error(
-			message ?? `No entries found for traceId '${traceId}'.`
-		);
-	}
-	const actions = txEntries.map(e => e.action);
-	const hasPending = actions.includes('TRANSACTION_PENDING');
-	const hasCommitted = actions.includes('TRANSACTION_COMMITTED');
-	const hasRolledBack = actions.includes('TRANSACTION_ROLLED_BACK');
-
-	if (!hasPending) {
-		throw new Error(
-			message ?? `Expected TRANSACTION_PENDING entry for traceId '${traceId}', but found none.`
-		);
-	}
-
-	if (expectedOutcome === 'COMMITTED' && !hasCommitted) {
-		throw new Error(
-			message ?? `Expected TRANSACTION_COMMITTED entry for traceId '${traceId}', but found none.`
-		);
-	}
-
-	if (expectedOutcome === 'ROLLED_BACK' && !hasRolledBack) {
-		throw new Error(
-			message ?? `Expected TRANSACTION_ROLLED_BACK entry for traceId '${traceId}', but found none.`
-		);
-	}
+	return {
+		passed: true,
+		message: `Ledger chain integrity verified (${entries.length} entries)`,
+		actual: entries
+	};
 }

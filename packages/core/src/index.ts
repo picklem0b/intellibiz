@@ -78,3 +78,10 @@ export type { IntellibizErrorOptions } from './errors.js';
 // ─── Native Bridge ────────────────────────────────────────────────────────────
 export { getNative, setNative, resetNative } from './native/bridge.js';
 export type { NativeBridge } from './native/bridge.js';
+
+// ─── Sanitize ─────────────────────────────────────────────────────────────
+export { stripSensitive, sanitizeForLog, getSensitiveFields } from './sanitize.js';
+
+// ─── Redis PubSub ────────────────────────────────────────────────────────
+export { RedisPubSub, getRedisPubSub, resetRedisPubSub } from './events/redis-pubsub.js';
+export type { RedisPubSubConfig, PubSubMessage } from './events/redis-pubsub.js';

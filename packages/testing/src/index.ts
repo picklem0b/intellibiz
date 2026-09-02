@@ -254,3 +254,10 @@ export function resetTestState(): void {
 	clearAllListeners();
 	clearGovernanceLog();
 }
+
+// ─── Virtual Time Travel ────────────────────────────────────────────────────
+export { advanceTime, setTime, freezeTime, thawTime, resetTime, getVirtualNow, installTimeTravel, restoreTime } from './time-travel.js';
+
+// ─── Ledger Assertions ──────────────────────────────────────────────────────
+export { assertLedgerEntry, assertLedgerTotal, assertLedgerCount, assertLedgerChainIntegrity, recordTestLedgerEntry, getLedgerEntries, resetTestState } from './ledger-assert.js';
+export type { LedgerEntry, LedgerFilter, LedgerAssertResult } from './ledger-assert.js';

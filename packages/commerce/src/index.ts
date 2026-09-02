@@ -76,3 +76,11 @@ export const commerce = {
 		});
 	}
 };
+
+// ─── Subscriptions & Dunning ────────────────────────────────────────────────
+export { subscriptions, dunning } from './subscriptions.js';
+export type { Subscription, SubscriptionInterval, DunningPlan, DunningAttempt, PlanUpgrade } from './subscriptions.js';
+
+// ─── Multi-Vendor Marketplace ───────────────────────────────────────────────
+export { marketplace } from './marketplace.js';
+export type { VendorPayout, SplitResult, EscrowHold } from './marketplace.js';

@@ -1,21 +1,24 @@
 {
-	"name": "@intellibiz/plugin-aws",
-	"version": "1.0.0",
-	"private": true,
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"exports": {
-		".": {
-			"import": "./dist/index.js",
-			"require": "./dist/index.cjs"
-		}
-	},
-	"scripts": {
-		"build": "echo skipping stub",
-		"dev": "tsup src/index.ts --format esm,cjs --dts --watch",
-		"test": "echo \"no tests yet\""
-	},
-    "devDependecies": {
-        "tsup": "^latest"
+  "name": "@intellibiz/plugin-aws",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
+  },
+  "scripts": {
+    "build": "echo skipping stub",
+    "dev": "tsdown src/index.ts --format esm,cjs --dts --watch",
+    "test": "echo \"no tests yet\""
+  },
+  "devDependecies": {
+    "tsup": "^latest"
+  },
+  "devDependencies": {
+    "tsdown": "^0.22.14"
+  }
 }

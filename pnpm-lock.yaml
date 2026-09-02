@@ -129,11 +129,23 @@ importers:
         specifier: ^4.0.0
         version: 4.23.11
 
-  internal/logger: {}
+  internal/logger:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  internal/shared: {}
+  internal/shared:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  internal/types: {}
+  internal/types:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
   packages/cli:
     dependencies:
@@ -270,6 +282,25 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.1)(tsx@4.23.11))
 
+  packages/growth:
+    dependencies:
+      '@intellibiz/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.1)(tsx@4.23.11))
+
   packages/http:
     dependencies:
       '@intellibiz/core':
@@ -334,12 +365,59 @@ importers:
       '@intellibiz/finance':
         specifier: workspace:*
         version: link:../finance
+      '@intellibiz/growth':
+        specifier: workspace:*
+        version: link:../growth
       '@intellibiz/http':
         specifier: workspace:*
         version: link:../http
       '@intellibiz/identity':
         specifier: workspace:*
         version: link:../identity
+      '@intellibiz/inventory':
+        specifier: workspace:*
+        version: link:../inventory
+      '@intellibiz/legal':
+        specifier: workspace:*
+        version: link:../legal
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.1)(tsx@4.23.11))
+
+  packages/inventory:
+    dependencies:
+      '@intellibiz/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.1)(tsx@4.23.11))
+
+  packages/legal:
+    dependencies:
+      '@intellibiz/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -382,25 +460,65 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.1)(tsx@4.23.11))
 
-  plugins/anthropic: {}
+  plugins/anthropic:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  plugins/aws: {}
+  plugins/aws:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  plugins/azure: {}
+  plugins/azure:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  plugins/gcp: {}
+  plugins/gcp:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  plugins/mysql: {}
+  plugins/mysql:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  plugins/openai: {}
+  plugins/openai:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  plugins/postgres: {}
+  plugins/postgres:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  plugins/redis: {}
+  plugins/redis:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  plugins/s3: {}
+  plugins/s3:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
-  plugins/sqlite: {}
+  plugins/sqlite:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
   plugins/stripe:
     devDependencies:
@@ -417,7 +535,11 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.1)(tsx@4.23.11))
 
-  tools/sdk: {}
+  tools/sdk:
+    devDependencies:
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(tsx@4.23.11)(typescript@5.9.3)
 
 packages:
 
