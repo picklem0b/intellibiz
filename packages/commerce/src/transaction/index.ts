@@ -88,6 +88,11 @@ class CompensationStack {
 export interface PaymentProvider {
 	readonly name: string;
 	charge(params: ChargeParams): Promise<ChargeResult>;
+	/**
+	 * Optional compensating refund. When present it is invoked automatically if
+	 * a transaction rolls back after a successful charge.
+	 */
+	refund?(params: RefundParams): Promise<void>;
 }
 
 /**
@@ -143,7 +148,10 @@ export async function transaction<T>(
 	const journalId = `ibiz_txn_${tenantId}_${traceId}_${Date.now()}`;
 
 	const compensation = new CompensationStack();
-	let state: TransactionState = 'PENDING';
+	// Held in an object so TypeScript does not narrow the value across the
+	// async closure boundary (assignments inside `charge` are not tracked by
+	// control-flow analysis on a `let` binding).
+	const txState: { value: TransactionState } = { value: 'PENDING' };
 
 	const tx: TransactionHandle = {
 		payments: {
@@ -151,13 +159,17 @@ export async function transaction<T>(
 				const result = await _provider.charge(params);
 
 				if (result.status === 'PENDING_BANK_RECONCILIATION') {
-					state = 'PENDING_BANK_RECONCILIATION';
+					txState.value = 'PENDING_BANK_RECONCILIATION';
 				}
 
-				// Register compensating action — refund on rollback
+				// Register compensating action — refund the successful charge on rollback
 				compensation.push(async () => {
-					// In production: call provider.refund(result.id)
-					void result.id;
+					if (
+						result.status === 'SUCCEEDED' &&
+						typeof _provider.refund === 'function'
+					) {
+						await _provider.refund({ paymentId: result.id });
+					}
 				});
 
 				return result;
@@ -198,8 +210,8 @@ export async function transaction<T>(
 
 	try {
 		const result = await fn(tx);
-		state =
-			state === 'PENDING_BANK_RECONCILIATION'
+		txState.value =
+			txState.value === 'PENDING_BANK_RECONCILIATION'
 				? 'PENDING_BANK_RECONCILIATION'
 				: 'COMMITTED';
 		return result;
@@ -207,10 +219,10 @@ export async function transaction<T>(
 		// Execute compensating actions in reverse order
 		try {
 			await compensation.runAll();
-			state = 'ROLLED_BACK';
+			txState.value = 'ROLLED_BACK';
 		} catch {
 			// Compensating action itself failed — human intervention required
-			state = 'MANUAL_REVIEW';
+			txState.value = 'MANUAL_REVIEW';
 		}
 		throw err;
 	}

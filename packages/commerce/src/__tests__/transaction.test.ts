@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { transaction, setPaymentProvider, type PaymentProvider, type ChargeParams } from '../transaction/index.js';
+import {
+	transaction,
+	setPaymentProvider,
+	type PaymentProvider,
+	type ChargeParams,
+	type ChargeResult
+} from '../transaction/index.js';
 import { money } from '@intellibiz/finance';
 import { runWithContext, type IntellibizStore } from '@intellibiz/core';
 
@@ -40,7 +46,7 @@ class MockPaymentProvider implements PaymentProvider {
 class FailingPaymentProvider implements PaymentProvider {
 	readonly name = 'failing';
 
-	async charge(_params: ChargeParams) {
+	async charge(_params: ChargeParams): Promise<ChargeResult> {
 		throw new Error('Payment provider error');
 	}
 }
@@ -182,6 +188,65 @@ describe('commerce.transaction', () => {
 			await transaction(async (tx) => {
 				await tx.licenses.revoke({ licenseId: 'lic_1' });
 			});
+		});
+	});
+
+	describe('rollback compensation', () => {
+		it('refunds a successful charge when a later step throws', async () => {
+			const refunded: string[] = [];
+			const provider: PaymentProvider = {
+				name: 'refundable',
+				async charge() {
+					return { id: 'pay_refund_1', status: 'SUCCEEDED' };
+				},
+				async refund(params) {
+					refunded.push(params.paymentId);
+				}
+			};
+			setPaymentProvider(provider);
+
+			await runWithContext(createContext(), async () => {
+				await expect(
+					transaction(async (tx) => {
+						await tx.payments.charge({
+							amount: money('10.00', 'USD'),
+							orderId: 'ord_rollback',
+							customerEmail: 'a@b.com'
+						});
+						throw new Error('later step failed');
+					})
+				).rejects.toThrow('later step failed');
+			});
+
+			expect(refunded).toEqual(['pay_refund_1']);
+		});
+
+		it('does not attempt a refund when the charge itself failed', async () => {
+			const refunded: string[] = [];
+			const provider: PaymentProvider = {
+				name: 'failing-refundable',
+				async charge() {
+					throw new Error('charge declined');
+				},
+				async refund(params) {
+					refunded.push(params.paymentId);
+				}
+			};
+			setPaymentProvider(provider);
+
+			await runWithContext(createContext(), async () => {
+				await expect(
+					transaction(async (tx) => {
+						await tx.payments.charge({
+							amount: money('10.00', 'USD'),
+							orderId: 'ord_norefund',
+							customerEmail: 'a@b.com'
+						});
+					})
+				).rejects.toThrow('charge declined');
+			});
+
+			expect(refunded).toEqual([]);
 		});
 	});
 });
