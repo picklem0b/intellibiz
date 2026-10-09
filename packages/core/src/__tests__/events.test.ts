@@ -7,16 +7,17 @@ import {
 	listenerCount,
 	registeredEvents,
 	getDeadLetterQueue,
-	clearDeadLetterQueue,
-	type IntellibizEvents
+	clearDeadLetterQueue
 } from '../events/bus.js';
+import type { IntellibizEvents } from '../context/types.js';
 import {
 	runWithContext,
 	type IntellibizStore
 } from '../context/store.js';
 
-// Extend the event registry for testing
-declare module '../context/types.js' {
+// Extend the event registry for testing (augment the public entry point, where
+// `IntellibizEvents` is declared).
+declare module '../index.js' {
 	interface IntellibizEvents {
 		'order.placed': { orderId: string; total: string };
 		'user.signup': { userId: string; email: string };
@@ -120,6 +121,42 @@ describe('Event Bus', () => {
 		const dlq = getDeadLetterQueue();
 		expect(dlq.length).toBe(1);
 		expect(dlq[0]!.reason).toBe('permanent failure');
+
+		clearAllListeners();
+		clearDeadLetterQueue();
+	});
+
+	it('scopes maxRetries to the listener, not to its (empty) name', async () => {
+		clearAllListeners();
+		clearDeadLetterQueue();
+
+		// Two anonymous arrow listeners. The first opts out of retries; the
+		// second does not. Keying the retry budget by `fn.name` would make both
+		// listeners share the key `order.placed::` and silently give the second a
+		// zero-retry budget.
+		let noRetryAttempts = 0;
+		let retriedAttempts = 0;
+
+		on(
+			'order.placed',
+			async () => {
+				noRetryAttempts++;
+				throw new Error('permanent failure');
+			},
+			{ maxRetries: 0 }
+		);
+
+		on('order.placed', async () => {
+			retriedAttempts++;
+			if (retriedAttempts === 1) throw new Error('temporary failure');
+		});
+
+		const result = await emit('order.placed', { orderId: 'ord_1', total: '10' });
+
+		expect(noRetryAttempts).toBe(1); // never retried
+		expect(retriedAttempts).toBe(2); // failed once, retried once
+		expect(result.delivered).toBe(1);
+		expect(result.deadLettered).toBe(1);
 
 		clearAllListeners();
 		clearDeadLetterQueue();

@@ -1,5 +1,15 @@
-import type { IntellibizEvents } from '../context/types.js';
-import { getContext, hasContext } from '../context/store.js';
+import type {
+	ContextServices,
+	IntellibizEvents,
+	SharedServices
+} from '../context/types.js';
+import {
+	getContext,
+	hasContext,
+	type IntellibizStore
+} from '../context/store.js';
+import { buildRegisteredServices } from '../context/service-registry.js';
+import { createLogger } from '../logger.js';
 import { createTraceId } from '../trace.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -7,7 +17,9 @@ import { createTraceId } from '../trace.js';
 type EventKey = keyof IntellibizEvents;
 type EventPayload<K extends EventKey> = IntellibizEvents[K];
 
-export interface EventEnvelope<K extends EventKey = EventKey> {
+export interface EventEnvelope<K extends EventKey = EventKey>
+	extends ContextServices,
+		Readonly<SharedServices> {
 	readonly eventId: string;
 	readonly event: K;
 	readonly payload: EventPayload<K>;
@@ -61,7 +73,14 @@ function backoffMs(attempt: number): number {
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 const listeners = new Map<string, Array<ListenerFn<EventKey>>>();
-const listenerMaxRetries = new Map<string, number>();
+/**
+ * Per-listener retry budget, keyed by the listener function itself.
+ *
+ * It must NOT be keyed by `fn.name`: anonymous arrow listeners all report
+ * `name === ''`, so registering one with `{ maxRetries: 0 }` used to silently
+ * impose a zero-retry budget on every other anonymous listener for the event.
+ */
+const listenerMaxRetries = new WeakMap<ListenerFn<EventKey>, number>();
 
 // ─── emit ─────────────────────────────────────────────────────────────────────
 
@@ -85,16 +104,39 @@ export async function emit<K extends EventKey>(
 ): Promise<EventDeliveryResult> {
 	const ctx = hasContext() ? getContext() : null;
 
+	const eventId = `ibiz_evt_${Date.now().toString(16)}${createTraceId().slice(-8)}`;
+	const traceId = ctx?.traceId ?? createTraceId();
+	const tenantId = ctx?.tenantId ?? 'system';
+	const userId = ctx?.userId ?? null;
+	const source = ctx?.origin ?? 'unknown';
+
+	// Give listeners the same base services as req/action contexts (log, emit,
+	// and any package-registered services such as db).
+	const serviceStore: IntellibizStore = ctx ?? {
+		traceId,
+		tenantId,
+		userId,
+		role: 'anonymous',
+		startTime: process.hrtime.bigint(),
+		origin: 'system'
+	};
+	const services = {
+		log: createLogger({ traceId, tenantId, userId, source }),
+		emit: emit as ContextServices['emit'],
+		...buildRegisteredServices(serviceStore)
+	} as unknown as ContextServices & SharedServices;
+
 	const envelope: EventEnvelope<K> = Object.freeze({
-		eventId: `ibiz_evt_${Date.now().toString(16)}${createTraceId().slice(-8)}`,
+		eventId,
 		event,
 		payload,
-		traceId: ctx?.traceId ?? createTraceId(),
-		tenantId: ctx?.tenantId ?? 'system',
-		userId: ctx?.userId ?? null,
-		source: ctx?.origin ?? 'unknown',
+		traceId,
+		tenantId,
+		userId,
+		source,
 		timestamp: Date.now(),
-		deliveryAttempt: 1
+		deliveryAttempt: 1,
+		...services
 	});
 
 	const fns = listeners.get(event as string) ?? [];
@@ -104,9 +146,7 @@ export async function emit<K extends EventKey>(
 
 	await Promise.all(
 		fns.map(async fn => {
-			const maxRetries =
-				listenerMaxRetries.get(`${String(event)}::${fn.name}`) ??
-				DEFAULT_MAX_RETRIES;
+			const maxRetries = listenerMaxRetries.get(fn) ?? DEFAULT_MAX_RETRIES;
 			let attempt = 0;
 
 			while (attempt <= maxRetries) {
@@ -165,10 +205,7 @@ export function on<K extends EventKey>(
 	listeners.set(event as string, existing);
 
 	if (options?.maxRetries !== undefined) {
-		listenerMaxRetries.set(
-			`${String(event)}::${listener.name}`,
-			options.maxRetries
-		);
+		listenerMaxRetries.set(listener as ListenerFn<EventKey>, options.maxRetries);
 	}
 }
 
@@ -184,7 +221,8 @@ export function off(event: string): void {
  */
 export function clearAllListeners(): void {
 	listeners.clear();
-	listenerMaxRetries.clear();
+	// A WeakMap cannot be cleared; entries for removed listeners are simply
+	// unreachable and get collected.
 }
 
 /**
