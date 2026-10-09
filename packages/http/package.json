@@ -1,22 +1,28 @@
 {
 	"name": "@intellibiz/http",
 	"version": "1.0.0",
+	"type": "module",
 	"private": false,
 	"description": "Intellibiz HTTP — Hono wrapper, RequestContext, middleware, routing",
 	"main": "./dist/index.cjs",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.mts",
 	"exports": {
 		".": {
-			"import": "./dist/index.js",
-			"require": "./dist/index.cjs",
-			"types": "./dist/index.d.ts"
+			"import": {
+				"types": "./dist/index.d.mts",
+				"default": "./dist/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			}
 		}
 	},
 	"files": ["dist"],
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm,cjs --dts --clean",
-		"dev": "tsdown src/index.ts --format esm,cjs --dts --watch",
+		"build": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022",
+		"dev": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022 --watch",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
 		"lint": "tsc --noEmit",
@@ -31,8 +37,9 @@
 		"@hono/node-server": "^2.1.0",
 		"@types/node": "^22.0.0",
 		"tsdown": "^0.22.14",
-		"typescript": "^7.0.2",
-		"vitest": "^4.1.10"
+		"typescript": "^5.9.3",
+		"vitest": "^4.1.10",
+		"zod": "^4.4.3"
 	},
 	"peerDependencies": {
 		"@hono/node-server": "^2.1.0"
