@@ -4,7 +4,13 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
+// Canonical origin used to resolve Open Graph / Twitter image URLs. Set
+// NEXT_PUBLIC_SITE_URL in the deploy environment; the fallback keeps local
+// builds deterministic.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://intellibiz.dev";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "IntelliBiz — The Operating System for Business Logic",
     template: "%s | IntelliBiz",
@@ -28,7 +34,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "[DOCUMENTATION URL]",
+    url: siteUrl,
     siteName: "IntelliBiz",
     title: "IntelliBiz — The Operating System for Business Logic",
     description:

@@ -10,6 +10,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Semantic tokens driven by the CSS variables declared in
+        // `src/app/globals.css`. Without these mappings every `bg-background`
+        // / `text-muted-foreground` / `border-border` class used across the
+        // site fails to compile (`@apply border-border` throws at build time).
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
         brand: {
           50: "#eef2ff",
           100: "#e0e7ff",
@@ -23,6 +36,11 @@ const config: Config = {
           900: "#312e81",
           950: "#1e1b4b",
         },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
