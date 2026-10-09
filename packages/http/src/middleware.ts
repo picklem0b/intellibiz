@@ -17,6 +17,21 @@ export interface MiddlewareOptions {
  * 3. Host subdomain
  * 4. Falls back to 'system' (or throws if strict)
  */
+/** Reads the request host from the `host` header, falling back to the URL. */
+function resolveHost(c: Context): string {
+	const headerHost = c.req.header('host');
+	const raw = headerHost && headerHost.length > 0 ? headerHost : safeHost(c.req.url);
+	return (raw ?? '').split(':')[0] ?? '';
+}
+
+function safeHost(url: string): string | null {
+	try {
+		return new URL(url).host;
+	} catch {
+		return null;
+	}
+}
+
 export function resolveTenant(
 	c: Context,
 	jwtClaims: { tenantId?: string } | null,
@@ -27,10 +42,20 @@ export function resolveTenant(
 
 	if (jwtClaims?.tenantId) return jwtClaims.tenantId;
 
-	const host = c.req.header('host') ?? '';
-	const subdomain = host.split('.')[0];
-	if (subdomain && subdomain !== 'www' && subdomain !== 'api')
-		return subdomain;
+	// Host-based resolution uses a *subdomain* of the host, so a bare host
+	// (`example.com`, `localhost`, `127.0.0.1`) must not be treated as a tenant.
+	// The `host` header is authoritative when present, but some runtimes and
+	// synthetic requests omit it — fall back to the request URL's host.
+	const host = resolveHost(c);
+	const labels = host.split('.').filter(Boolean);
+	const isIpv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+
+	if (!isIpv4 && labels.length >= 3) {
+		const subdomain = labels[0];
+		if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
+			return subdomain;
+		}
+	}
 
 	if (strict) {
 		throw Object.assign(
