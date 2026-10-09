@@ -168,9 +168,12 @@ grandTotal.format('en-US')   // "$22.99"
 grandTotal.format('en-ZA')   // "R 22,99"
 
 // Pro-rata allocation — no rounding loss
+// Each bucket is floored, then the leftover minor unit is added to the first
+// bucket, so the parts always sum back to the exact original amount.
 const splits = grandTotal.allocate([70, 30]) // 70% / 30%
-splits[0].format()  // $16.09
-splits[1].format()  // $6.90
+splits[0].format()  // $16.10
+splits[1].format()  // $6.89
+splits[0].add(splits[1]).amount // '22.99'
 ```
 
 ---
@@ -465,7 +468,7 @@ export default defineConfig({
   }),
 
   tenancy:  { strategy: 'column', key: 'org_id', type: 'uuid', strict: true },
-  currency: { base: 'USD', rounding: 'bankers' },
+  finance:  { baseCurrency: 'USD', rounding: 'bankers' },
   taxation: { provider: 'internal', defaultRate: 0.15 },
   ledger:   { mode: 'atomic', sync: ['db', 's3'], retention: '7y' },
   purchases:{ invoicing: 'auto', multiCurrency: true },

@@ -132,8 +132,8 @@ export default defineConfig({
     strict: true,
   },
 
-  currency: {
-    base: 'USD',
+  finance: {
+    baseCurrency: 'USD',
     rounding: 'bankers',
   },
 
