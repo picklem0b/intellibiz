@@ -101,13 +101,38 @@ export interface PluginDefinition {
  * })
  */
 export function definePlugin(definition: PluginDefinition): PluginDefinition {
+	// Build a defensive copy without introducing explicit `undefined` values —
+	// assigning `undefined` to an optional property is a type error under
+	// `exactOptionalPropertyTypes`. Absent properties must stay absent.
+	const frozen: {
+		name: string;
+		version: string;
+		description?: string;
+		dependencies?: string[];
+		services?: Record<string, (deps: Record<string, unknown>) => unknown>;
+		hooks?: PluginHooks;
+		configSchema?: ZodTypeAny;
+	} = {
+		name: definition.name,
+		version: definition.version
+	};
+
+	if (definition.description !== undefined) {
+		frozen.description = definition.description;
+	}
+	if (definition.dependencies !== undefined) {
+		frozen.dependencies = [...definition.dependencies];
+	}
+	if (definition.services !== undefined) {
+		frozen.services = { ...definition.services };
+	}
+	if (definition.hooks !== undefined) {
+		frozen.hooks = { ...definition.hooks };
+	}
+	if (definition.configSchema !== undefined) {
+		frozen.configSchema = definition.configSchema;
+	}
+
 	// Freeze the definition to prevent mutation after registration
-	return Object.freeze({
-		...definition,
-		services: definition.services ? { ...definition.services } : undefined,
-		hooks: definition.hooks ? { ...definition.hooks } : undefined,
-		dependencies: definition.dependencies
-			? [...definition.dependencies]
-			: undefined
-	});
+	return Object.freeze(frozen);
 }

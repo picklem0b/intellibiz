@@ -4,7 +4,9 @@ export interface IntellibizErrorOptions {
 	code: string;
 	message: string;
 	status: number;
-	details?: Record<string, unknown>;
+	/** Optional structured metadata. Explicitly allows `undefined` so callers can
+	 *  forward an optional field under `exactOptionalPropertyTypes`. */
+	details?: Record<string, unknown> | undefined;
 	cause?: unknown;
 }
 
