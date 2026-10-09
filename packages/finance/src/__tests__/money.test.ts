@@ -118,6 +118,15 @@ describe('Money', () => {
 			const m = money('0.500', 'KWD');
 			expect(m.amount).toBe('0.500');
 		});
+
+		// IQD is only present in the canonical precision table — this guards the
+		// de-duplication of the two currency maps that used to disagree.
+		it('IQD has 3 decimal places', () => {
+			const m = money('1.234', 'IQD');
+			expect(getCurrencyDecimals('IQD')).toBe(3);
+			expect(m.amount).toBe('1.234');
+			expect(m.toMinorUnits()).toBe(1234);
+		});
 	});
 
 	describe('allocation (pro-rata split)', () => {
@@ -129,17 +138,16 @@ describe('Money', () => {
 			expect(splits[1]!.amount).toBe('5.00');
 			// Sum must equal original
 			expect(splits[0]!.add(splits[1]!).amount).toBe('10.00');
+		});		it('splits 70/30 with no cent lost', () => {
+			const m = money('22.99', 'USD');
+			const splits = m.allocate([70, 30]);
+			// floor(2299 * 70 / 100) = floor(1609.3) = 1609 cents → $16.09
+			// floor(2299 * 30 / 100) = floor(689.7) = 689 cents → $6.89
+			// Sum is 2298; the leftover cent is added to the first bucket → $16.10
+			expect(splits[0]!.amount).toBe('16.10');
+			expect(splits[1]!.amount).toBe('6.89');
+			expect(splits[0]!.add(splits[1]!).amount).toBe('22.99');
 		});
-
-	it('splits 70/30 with no cent lost', () => {
-		const m = money('22.99', 'USD');
-		const splits = m.allocate([70, 30]);
-		// 2299 cents * 70 / 100 = 1609.3 → floor = 1609 cents = $16.09
-		// Remainder: 2299 - 1609 = 690 cents = $6.90
-		// But decimal.js uses different rounding — verify sum equals original
-		const total = splits[0]!.add(splits[1]!);
-		expect(total.amount).toBe('22.99');
-	});
 
 		it('splits across three parts', () => {
 			const m = money('100.00', 'USD');
