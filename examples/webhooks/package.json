@@ -1,0 +1,21 @@
+{
+	"name": "@intellibiz-examples/webhooks",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Payment webhooks — HMAC signature verification, idempotent dedup, bank reconciliation.",
+	"scripts": {
+		"dev": "tsx src/index.ts",
+		"start": "tsx src/index.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@intellibiz/commerce": "workspace:*",
+		"intellibiz": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"tsx": "^4.0.0",
+		"typescript": "^5.9.3"
+	}
+}
