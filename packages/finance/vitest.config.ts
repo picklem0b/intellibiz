@@ -7,7 +7,7 @@ export default defineConfig({
 	},
 	resolve: {
 		alias: {
-			'@intellibiz/core': path.resolve(__dirname, '../core/src/index.ts')
+			'@intellibiz/core': path.resolve(import.meta.dirname, '../core/src/index.ts')
 		}
 	}
 });
