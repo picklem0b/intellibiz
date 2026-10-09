@@ -2,13 +2,26 @@ import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import {
 	runWithContext,
+	buildBaseContext,
+	isAction,
 	type IntellibizStore,
+	type Action,
 	IntellibizError
 } from '@intellibiz/core';
 import type { RequestContext } from '@intellibiz/core';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { kernelMiddleware, type MiddlewareOptions } from './middleware.js';
 
 type Handler = (req: RequestContext) => Promise<unknown> | unknown;
+
+/**
+ * A route handler is either a plain function receiving the request context, or
+ * an action returned by `defineAction`. Actions are mounted directly and are
+ * invoked with `req.body`; the action builds its own context from ALS.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- actions are
+// accepted regardless of their input type; the router hands them `req.body`.
+type RouteHandler = Handler | Action<any, unknown>;
 
 // ─── Response Inference ───────────────────────────────────────────────────────
 
@@ -42,27 +55,37 @@ class RouteGroup {
 		private readonly prefix: string
 	) {}
 
-	get(path: string, handler: Handler): this {
+	get(path: string, handler: Handler): this;
+	get(path: string, action: Action<any, unknown>): this;
+	get(path: string, handler: RouteHandler): this {
 		this.app.get(`${this.prefix}${path}`, wrapHandler(handler, 'GET'));
 		return this;
 	}
 
-	post(path: string, handler: Handler): this {
+	post(path: string, handler: Handler): this;
+	post(path: string, action: Action<any, unknown>): this;
+	post(path: string, handler: RouteHandler): this {
 		this.app.post(`${this.prefix}${path}`, wrapHandler(handler, 'POST'));
 		return this;
 	}
 
-	put(path: string, handler: Handler): this {
+	put(path: string, handler: Handler): this;
+	put(path: string, action: Action<any, unknown>): this;
+	put(path: string, handler: RouteHandler): this {
 		this.app.put(`${this.prefix}${path}`, wrapHandler(handler, 'PUT'));
 		return this;
 	}
 
-	patch(path: string, handler: Handler): this {
+	patch(path: string, handler: Handler): this;
+	patch(path: string, action: Action<any, unknown>): this;
+	patch(path: string, handler: RouteHandler): this {
 		this.app.patch(`${this.prefix}${path}`, wrapHandler(handler, 'PATCH'));
 		return this;
 	}
 
-	delete(path: string, handler: Handler): this {
+	delete(path: string, handler: Handler): this;
+	delete(path: string, action: Action<any, unknown>): this;
+	delete(path: string, handler: RouteHandler): this {
 		this.app.delete(
 			`${this.prefix}${path}`,
 			wrapHandler(handler, 'DELETE')
@@ -73,7 +96,7 @@ class RouteGroup {
 
 // ─── Handler Wrapper ─────────────────────────────────────────────────────────
 
-function wrapHandler(handler: Handler, method: string) {
+function wrapHandler(handler: RouteHandler, method: string) {
 	return async (c: any): Promise<Response> => {
 		const store: IntellibizStore = c.get('intellibizStore');
 
@@ -88,12 +111,23 @@ function wrapHandler(handler: Handler, method: string) {
 			);
 		}
 
+		// Read the body once as text so handlers get both the parsed JSON and the
+		// exact bytes that were sent. Webhook signature verification hashes the
+		// raw bytes — re-serializing parsed JSON would invalidate the HMAC.
+		let rawBody = '';
 		let body: unknown = undefined;
 		if (['POST', 'PUT', 'PATCH'].includes(method)) {
 			try {
-				body = await c.req.json();
+				rawBody = await c.req.text();
 			} catch {
-				body = undefined;
+				rawBody = '';
+			}
+			if (rawBody.length > 0) {
+				try {
+					body = JSON.parse(rawBody);
+				} catch {
+					body = undefined;
+				}
 			}
 		}
 
@@ -101,8 +135,10 @@ function wrapHandler(handler: Handler, method: string) {
 		const _responseHeaders: Record<string, string> = {};
 
 		const reqCtx: RequestContext = {
+			...buildBaseContext(store),
 			...store,
 			body,
+			rawBody,
 			headers: Object.fromEntries(c.req.raw.headers.entries()),
 			params: c.req.param(),
 			query: Object.fromEntries(
@@ -122,8 +158,17 @@ function wrapHandler(handler: Handler, method: string) {
 			}
 		};
 
+		// Actions are mounted directly — they receive req.body and build their own
+		// ActionContext from the ALS store set above.
+		const action = isAction(handler)
+			? (handler as Action<any, unknown>)
+			: null;
+		const plainHandler = action === null ? (handler as Handler) : null;
+
 		try {
-			const result = await runWithContext(store, () => handler(reqCtx));
+			const result = await runWithContext(store, async () =>
+				action !== null ? await action(reqCtx.body) : await plainHandler!(reqCtx)
+			);
 
 			// Apply custom headers
 			for (const [k, v] of Object.entries(_responseHeaders)) {
@@ -179,7 +224,7 @@ export class IntellibizRouter {
 		// Global error handler
 		this.app.onError((err, c) => {
 			if (err instanceof IntellibizError) {
-				return c.json(err.toJSON(), err.status);
+				return c.json(err.toJSON(), err.status as ContentfulStatusCode);
 			}
 			return c.json(
 				{
@@ -191,27 +236,37 @@ export class IntellibizRouter {
 		});
 	}
 
-	get(path: string, handler: Handler): this {
+	get(path: string, handler: Handler): this;
+	get(path: string, action: Action<any, unknown>): this;
+	get(path: string, handler: RouteHandler): this {
 		this.app.get(path, wrapHandler(handler, 'GET'));
 		return this;
 	}
 
-	post(path: string, handler: Handler): this {
+	post(path: string, handler: Handler): this;
+	post(path: string, action: Action<any, unknown>): this;
+	post(path: string, handler: RouteHandler): this {
 		this.app.post(path, wrapHandler(handler, 'POST'));
 		return this;
 	}
 
-	put(path: string, handler: Handler): this {
+	put(path: string, handler: Handler): this;
+	put(path: string, action: Action<any, unknown>): this;
+	put(path: string, handler: RouteHandler): this {
 		this.app.put(path, wrapHandler(handler, 'PUT'));
 		return this;
 	}
 
-	patch(path: string, handler: Handler): this {
+	patch(path: string, handler: Handler): this;
+	patch(path: string, action: Action<any, unknown>): this;
+	patch(path: string, handler: RouteHandler): this {
 		this.app.patch(path, wrapHandler(handler, 'PATCH'));
 		return this;
 	}
 
-	delete(path: string, handler: Handler): this {
+	delete(path: string, handler: Handler): this;
+	delete(path: string, action: Action<any, unknown>): this;
+	delete(path: string, handler: RouteHandler): this {
 		this.app.delete(path, wrapHandler(handler, 'DELETE'));
 		return this;
 	}

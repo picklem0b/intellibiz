@@ -157,10 +157,12 @@ describe('defineAction', () => {
 
 			await runWithContext(createContext(), async () => {
 				try {
+					// Deliberately invalid input — bypass the compile-time type so the
+					// runtime Zod guard is what is being exercised here.
 					await processCheckout({
 						cartItems: 'not-an-array',
 						shippingAddress: { country: 'US' }
-					});
+					} as unknown as Parameters<typeof processCheckout>[0]);
 					expect.fail('Should have thrown');
 				} catch (err) {
 					expect(err).toBeInstanceOf(ActionValidationError);

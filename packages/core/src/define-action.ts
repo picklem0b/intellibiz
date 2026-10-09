@@ -1,8 +1,54 @@
 import type { ZodTypeAny, ZodError } from 'zod';
 import type { z } from 'zod';
 import { getContext, runWithContext } from './context/store.js';
+import { buildBaseContext } from './context/services.js';
 import type { ActionContext } from './context/types.js';
 import { ActionValidationError } from './errors.js';
+
+// ─── Action Marker ──────────────────────────────────────────────────────────
+
+/**
+ * Brand attached to every function returned by defineAction. The HTTP router
+ * uses it to tell an action (invoked with `req.body`) apart from a plain route
+ * handler (invoked with the request context), enabling zero-wrapper mounting:
+ *
+ * ```typescript
+ * http.post('/api/checkout', processCheckout)
+ * ```
+ */
+export const ACTION_SYMBOL: unique symbol = Symbol.for('intellibiz.action');
+
+export interface ActionMeta {
+	/** The action's input validator, or `undefined` for inline actions. */
+	readonly input: unknown;
+}
+
+/** A callable action, branded so routers can mount it directly. */
+export interface Action<TInput = unknown, TOutput = unknown> {
+	(data: TInput): Promise<TOutput>;
+	readonly [ACTION_SYMBOL]: ActionMeta;
+}
+
+/** Type guard for action functions created by defineAction. */
+export function isAction(value: unknown): value is Action {
+	return (
+		typeof value === 'function' &&
+		(value as Partial<Action>)[ACTION_SYMBOL] !== undefined
+	);
+}
+
+function markAction<TInput, TOutput>(
+	fn: (data: TInput) => Promise<TOutput>,
+	input: unknown
+): Action<TInput, TOutput> {
+	Object.defineProperty(fn, ACTION_SYMBOL, {
+		value: { input } satisfies ActionMeta,
+		enumerable: false,
+		writable: false,
+		configurable: false
+	});
+	return fn as Action<TInput, TOutput>;
+}
 
 // ─── Overload Signatures ──────────────────────────────────────────────────────
 
@@ -62,22 +108,22 @@ interface ActionDefinition<TSchema extends ZodTypeAny, TOutput> {
  */
 export function defineAction<TInput, TOutput>(
 	handler: InlineHandler<TInput, TOutput>
-): (data: TInput) => Promise<TOutput>;
+): Action<TInput, TOutput>;
 
 export function defineAction<TSchema extends ZodTypeAny, TOutput>(
 	definition: ActionDefinition<TSchema, TOutput>
-): (data: z.infer<TSchema>) => Promise<TOutput>;
+): Action<z.infer<TSchema>, TOutput>;
 
 export function defineAction<TInput, TOutput>(
 	handlerOrDefinition:
 		| InlineHandler<TInput, TOutput>
 		| ActionDefinition<ZodTypeAny, TOutput>
-): (data: TInput) => Promise<TOutput> {
+): Action<TInput, TOutput> {
 	// ── Form 1: inline handler ──────────────────────────────────────────────────
 	if (typeof handlerOrDefinition === 'function') {
 		const handler = handlerOrDefinition;
 
-		return async (data: TInput): Promise<TOutput> => {
+		const action = async (data: TInput): Promise<TOutput> => {
 			const parent = getContext();
 			const actionCtx: ActionContext<TInput> = buildActionContext(
 				parent,
@@ -85,12 +131,14 @@ export function defineAction<TInput, TOutput>(
 			);
 			return runWithContext({ ...parent }, () => handler(actionCtx));
 		};
+
+		return markAction(action, undefined);
 	}
 
 	// ── Form 2: schema + handler ────────────────────────────────────────────────
 	const { input: schema, handler } = handlerOrDefinition;
 
-	return async (data: TInput): Promise<TOutput> => {
+	const action = async (data: TInput): Promise<TOutput> => {
 		const parent = getContext();
 
 		// Validate with Zod — throws ActionValidationError with structured field issues
@@ -113,6 +161,8 @@ export function defineAction<TInput, TOutput>(
 		);
 		return runWithContext({ ...parent }, () => handler(actionCtx));
 	};
+
+	return markAction(action, schema);
 }
 
 // ─── Internal Helpers ─────────────────────────────────────────────────────────
@@ -122,12 +172,8 @@ function buildActionContext<TData>(
 	data: TData
 ): ActionContext<TData> {
 	return {
-		traceId: parent.traceId,
-		tenantId: parent.tenantId,
-		userId: parent.userId,
-		role: parent.role,
-		startTime: parent.startTime,
-		origin: parent.origin,
+		...parent,
+		...buildBaseContext(parent),
 		data
 	};
 }
