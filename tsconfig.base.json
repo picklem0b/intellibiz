@@ -9,10 +9,10 @@
         "noUncheckedIndexedAccess": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
+        "esModuleInterop": true,
         "declaration": true,
         "declarationMap": true,
         "sourceMap": true,
-        "esModuleInterop": false,
         "skipLibCheck": true,
         "isolatedModules": true,
         "verbatimModuleSyntax": true

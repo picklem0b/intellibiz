@@ -257,7 +257,7 @@ export { commerce } from '@intellibiz/commerce'
 export { identity } from '@intellibiz/identity'
 export { defineConfig } from '@intellibiz/core'
 export { defineAction } from '@intellibiz/core'
-export type { IntellibiзConfig } from '@intellibiz/core'
+export type { IntellibizConfig, IntellibizConfigInput } from '@intellibiz/core'
 EOF
 echo "  Updated packages/intellibiz/src/index.ts"
 

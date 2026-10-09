@@ -11,3 +11,9 @@ Cargo.lock
 *.node
 .DS_Store
 coverage/
+
+# Next.js (website)
+website/.next/
+website/out/
+website/next-env.d.ts
+website/.turbo/

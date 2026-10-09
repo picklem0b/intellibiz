@@ -4,5 +4,6 @@ packages:
   - internal/*
   - tools/*
   - examples/*
+  - website
 onlyBuiltDependencies:
   - esbuild
