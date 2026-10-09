@@ -146,5 +146,3 @@ export const IntellibizConfigSchema = z.object({
 });
 
 export type IntellibizConfig = z.infer<typeof IntellibizConfigSchema>;
-/** Legacy alias preserving the Cyrillic 'з' from the original codebase. */
-export type IntellibiзConfig = IntellibizConfig;

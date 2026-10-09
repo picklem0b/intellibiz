@@ -1,54 +1,54 @@
+import type { z } from 'zod';
 import type { IntellibizConfig } from './schema.js';
 import { IntellibizConfigSchema } from './schema.js';
 import { ConfigValidationError, ConfigDependencyError } from '../errors.js';
 
+/**
+ * The argument `defineConfig` accepts. This is the *input* type of the schema, so
+ * every field with a Zod `.default()` is optional for the caller — the output
+ * type (`IntellibizConfig`) has all defaults filled in.
+ */
+export type IntellibizConfigInput = z.input<typeof IntellibizConfigSchema>;
+
 // ─── Dependency Rules ─────────────────────────────────────────────────────────
 
 interface DependencyRule {
-	/** A human-readable description of this rule. */
-	description: string;
-	/** Returns a human-readable error if the rule is violated, null if satisfied. */
-	check(config: IntellibizConfig): string | null;
+	/** The config field that is required. */
+	flag: string;
+	/** The configuration state that makes `flag` required. */
+	requires: string;
+	/** Returns true when the rule is violated. */
+	isViolated(config: IntellibizConfig): boolean;
 }
 
 const DEPENDENCY_RULES: DependencyRule[] = [
 	{
-		description: 'auth.jwtSecret required when auth.provider is "internal"',
-		check: c =>
-			c.auth?.provider === 'internal' && !c.auth.jwtSecret
-				? 'auth.jwtSecret is required when auth.provider is "internal"'
-				: null
+		flag: 'auth.jwtSecret',
+		requires: 'auth.provider = "internal"',
+		isViolated: c => c.auth?.provider === 'internal' && !c.auth.jwtSecret
 	},
 	{
-		description: 'tenancy required when ledger.mode is "atomic"',
-		check: c =>
-			c.ledger?.mode === 'atomic' && !c.tenancy
-				? 'tenancy configuration is required when ledger.mode is "atomic"'
-				: null
+		flag: 'tenancy',
+		requires: 'ledger.mode = "atomic"',
+		isViolated: c => c.ledger?.mode === 'atomic' && !c.tenancy
 	},
 	{
-		description:
-			'governance.auditAll must be true when governance.allowSudo is true',
-		check: c =>
+		flag: 'governance.auditAll',
+		requires: 'governance.allowSudo = true',
+		isViolated: c =>
 			c.governance?.allowSudo === true && c.governance?.auditAll === false
-				? 'governance.auditAll must be true when governance.allowSudo is true — sudo access requires full auditing'
-				: null
 	},
 	{
-		description: 'environment.dryRun must be false in production',
-		check: c =>
+		flag: 'environment.dryRun = false',
+		requires: 'production',
+		isViolated: c =>
 			c.environment?.dryRun === true &&
 			process.env['NODE_ENV'] === 'production'
-				? 'environment.dryRun must be false in production'
-				: null
 	},
 	{
-		description:
-			'finance.baseCurrency required when commerce is configured',
-		check: c =>
-			c.commerce && !c.finance?.baseCurrency
-				? 'finance.baseCurrency is required when commerce is configured'
-				: null
+		flag: 'finance.baseCurrency',
+		requires: 'commerce',
+		isViolated: c => Boolean(c.commerce) && !c.finance?.baseCurrency
 	}
 ];
 
@@ -106,7 +106,7 @@ function emitStartupWarnings(config: IntellibizConfig): void {
  * })
  */
 export function defineConfig(
-	config: IntellibizConfig
+	config: IntellibizConfigInput
 ): Readonly<IntellibizConfig> {
 	// ── Pass 1: Schema validation ──────────────────────────────────────────────
 	const result = IntellibizConfigSchema.safeParse(config);
@@ -132,9 +132,8 @@ export function defineConfig(
 
 	// ── Pass 2: Dependency validation ──────────────────────────────────────────
 	for (const rule of DEPENDENCY_RULES) {
-		const violation = rule.check(resolved);
-		if (violation !== null) {
-			throw new ConfigDependencyError(rule.description, violation);
+		if (rule.isViolated(resolved)) {
+			throw new ConfigDependencyError(rule.flag, rule.requires);
 		}
 	}
 

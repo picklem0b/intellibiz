@@ -209,6 +209,35 @@ describe('defineConfig', () => {
 			});
 			expect(config.ledger?.mode).toBe('atomic');
 		});
+
+		it('reports the missing flag and the setting that requires it', () => {
+			try {
+				defineConfig({ auth: { provider: 'internal' } });
+				expect.fail('should have thrown ConfigDependencyError');
+			} catch (err) {
+				expect(err).toBeInstanceOf(ConfigDependencyError);
+				const depErr = err as ConfigDependencyError;
+				expect(depErr.message).toContain('auth.jwtSecret');
+				expect(depErr.message).toContain('auth.provider = "internal"');
+				expect(depErr.details).toEqual({
+					flag: 'auth.jwtSecret',
+					requires: 'auth.provider = "internal"'
+				});
+			}
+		});
+
+		it('reports tenancy as the missing flag for atomic ledger mode', () => {
+			try {
+				defineConfig({ ledger: { mode: 'atomic' } });
+				expect.fail('should have thrown ConfigDependencyError');
+			} catch (err) {
+				const depErr = err as ConfigDependencyError;
+				expect(depErr.details).toEqual({
+					flag: 'tenancy',
+					requires: 'ledger.mode = "atomic"'
+				});
+			}
+		});
 	});
 
 	describe('schema', () => {
