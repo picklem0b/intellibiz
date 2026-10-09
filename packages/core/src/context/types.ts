@@ -1,53 +1,41 @@
-import type { IntellibizStore } from './store.js';
+import type { ContextOrigin, IntellibizStore } from './store.js';
+import type { ContextLogger } from '../logger.js';
+import type { EventDeliveryResult } from '../events/bus.js';
+import type { SharedServices, IntellibizEvents } from '../index.js';
 
 // ─── Module Augmentation Interfaces ──────────────────────────────────────────
+//
+// `SharedServices` and `IntellibizEvents` are declared on the public entry point
+// (`index.ts`) so that `declare module '@intellibiz/core'` merges with them.
+// Re-exported here for internal consumers (e.g. the event bus).
+export type { SharedServices, IntellibizEvents };
 
 /**
- * Shared service surface available on every context type.
+ * Services every execution context receives from the kernel.
  *
- * Packages extend this interface via TypeScript module augmentation.
- * Developers never write this — each @intellibiz/* package declares its contribution.
- *
- * @example
- * // packages/commerce/src/types.ts
- * declare module '@intellibiz/core' {
- *   interface SharedServices {
- *     payments: PaymentService
- *     subscriptions: SubscriptionService
- *   }
- * }
- *
- * // This makes req.payments autocomplete in every handler without manual imports.
+ * `log` is a context-aware structured logger bound to the active trace, and
+ * `emit` re-emits events into the bus with the active ALS context. Additional
+ * services (e.g. `db`) are attached by their packages via module augmentation
+ * of `SharedServices` plus `registerContextService()`.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface SharedServices {}
-
-/**
- * Typed event registry. Extend via module augmentation in your application.
- *
- * @example
- * // src/types/events.ts
- * declare module '@intellibiz/core' {
- *   interface IntellibizEvents {
- *     'order.placed': { orderId: string; total: string }
- *     'user.signup':  { userId: string; email: string }
- *     'license.expired': { licenseId: string; plan: string }
- *   }
- * }
- *
- * // Now emit() and on() are fully type-checked and autocompleted.
- * await emit('order.placed', { orderId: 'ord_123', total: '49.99' })
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface IntellibizEvents {}
+export interface ContextServices {
+	readonly log: ContextLogger;
+	emit<K extends keyof IntellibizEvents>(
+		event: K,
+		payload: IntellibizEvents[K]
+	): Promise<EventDeliveryResult>;
+}
 
 // ─── Base Context ─────────────────────────────────────────────────────────────
 
 /**
  * The common base for all six specialized execution contexts.
- * Carries the full ALS store plus the shared service surface.
+ * Carries the full ALS store plus the kernel services and the shared
+ * (module-augmented) service surface.
  */
-type BaseContext = Readonly<IntellibizStore> & Readonly<SharedServices>;
+type BaseContext = Readonly<IntellibizStore> &
+	Readonly<SharedServices> &
+	Readonly<ContextServices>;
 
 // ─── RFC-001: The Six Specialized Execution Contexts ──────────────────────────
 
@@ -64,7 +52,13 @@ type BaseContext = Readonly<IntellibizStore> & Readonly<SharedServices>;
  * })
  */
 export interface RequestContext extends BaseContext {
+	/** Parsed JSON body (`POST`/`PUT`/`PATCH`), or `undefined` if absent/invalid. */
 	readonly body: unknown;
+	/**
+	 * The request body exactly as received, before parsing. Webhook signature
+	 * verification must hash these bytes — re-serializing `body` changes them.
+	 */
+	readonly rawBody: string;
 	readonly headers: Record<string, string>;
 	readonly params: Record<string, string>;
 	readonly query: Record<string, string>;
@@ -96,7 +90,7 @@ export interface RequestContext extends BaseContext {
  */
 export interface ActionContext<TData = unknown> extends BaseContext {
 	readonly data: TData;
-	readonly origin: string;
+	readonly origin: ContextOrigin;
 }
 
 /**

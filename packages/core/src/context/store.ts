@@ -9,7 +9,8 @@ export type ContextOrigin =
 	| 'cron'
 	| 'cli'
 	| 'socket'
-	| 'test';
+	| 'test'
+	| 'system';
 
 /**
  * The ALS store shape created by the Kernel for every execution unit.

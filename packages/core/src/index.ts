@@ -1,3 +1,22 @@
+// ─── Augmentation Surfaces ────────────────────────────────────────────────────
+// These interfaces are declared on the public entry point (not a submodule) so
+// that `declare module '@intellibiz/core' { interface SharedServices { ... } }`
+// actually merges, as promised by docs/DSL_GRAMMAR.md §5.
+
+/**
+ * Shared service surface available on every context.
+ * Packages extend this via module augmentation (e.g. `db`, `payments`).
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface SharedServices {}
+
+/**
+ * Typed event registry. Applications and packages extend this via module
+ * augmentation to register their event keys and payload shapes.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface IntellibizEvents {}
+
 // ─── ALS Context ─────────────────────────────────────────────────────────────
 export {
 	runWithContext,
@@ -14,8 +33,7 @@ export type { IntellibizStore, ContextOrigin } from './context/store.js';
 
 // ─── Context Types ────────────────────────────────────────────────────────────
 export type {
-	SharedServices,
-	IntellibizEvents,
+	ContextServices,
 	RequestContext,
 	ActionContext,
 	EventContext,
@@ -26,7 +44,37 @@ export type {
 } from './context/types.js';
 
 // ─── Action Engine ────────────────────────────────────────────────────────────
-export { defineAction } from './define-action.js';
+export { defineAction, isAction, ACTION_SYMBOL } from './define-action.js';
+export type { Action, ActionMeta } from './define-action.js';
+
+// ─── Logger ───────────────────────────────────────────────────────────────────
+export { createLogger } from './logger.js';
+export type { ContextLogger, LogLevel } from './logger.js';
+
+// ─── Context Services ─────────────────────────────────────────────────────────
+export { buildBaseContext } from './context/services.js';
+export {
+	registerContextService,
+	getContextServiceFactory,
+	buildRegisteredServices,
+	clearContextServices
+} from './context/service-registry.js';
+
+// ─── Specialized Context Builders ─────────────────────────────────────────────
+// Used by the job/task/socket runtimes so they expose the same service surface
+// (log, emit, db, ...) as req/action/event contexts.
+export {
+	buildJobContext,
+	buildTaskContext,
+	buildSocketContext
+} from './context/builders.js';
+export type {
+	JobContextMeta,
+	JobRuntimeHooks,
+	TaskContextMeta,
+	SocketContextMeta,
+	SocketDriver
+} from './context/builders.js';
 
 // ─── Plugin System ────────────────────────────────────────────────────────────
 export { definePlugin } from './define-plugin.js';
@@ -39,8 +87,9 @@ export {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 export { defineConfig } from './config/validate.js';
+export type { IntellibizConfigInput } from './config/validate.js';
 export { IntellibizConfigSchema } from './config/schema.js';
-export type { IntellibizConfig, IntellibiзConfig } from './config/schema.js';
+export type { IntellibizConfig } from './config/schema.js';
 
 // ─── Event Bus ────────────────────────────────────────────────────────────────
 export {
