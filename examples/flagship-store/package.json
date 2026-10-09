@@ -2,15 +2,25 @@
 	"name": "@intellibiz-examples/flagship-store",
 	"version": "1.0.0",
 	"private": true,
+	"type": "module",
+	"description": "Reference application — config, checkout, tenancy, webhooks and Stripe signature verification.",
 	"scripts": {
 		"dev": "tsx src/index.ts",
-		"start": "node dist/index.js"
+		"start": "tsx src/index.ts",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"intellibiz": "workspace:*"
+		"@intellibiz/commerce": "workspace:*",
+		"@intellibiz/core": "workspace:*",
+		"@intellibiz/http": "workspace:*",
+		"@intellibiz/testing": "workspace:*",
+		"intellibiz": "workspace:*",
+		"jose": "^6.2.3",
+		"zod": "^4.4.3"
 	},
 	"devDependencies": {
+		"@types/node": "^22.0.0",
 		"tsx": "^4.0.0",
-		"typescript": "^5.0.0"
+		"typescript": "^5.9.3"
 	}
 }

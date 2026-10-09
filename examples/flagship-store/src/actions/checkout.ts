@@ -1,94 +1,92 @@
-import { defineAction, commerce, finance, identity, sql } from 'intellibiz'
-import { z } from 'zod'
+/**
+ * `processOrder` — the flagship checkout pipeline.
+ *
+ *  identity → pricing → destination tax → atomic payment → journal → event
+ *
+ * Mounted on `POST /api/v1/checkout` with no wrapper (see `../index.ts`).
+ */
+import { commerce, defineAction, finance, identity, money, sql } from 'intellibiz';
+import { z } from 'zod';
 
 const CartItemSchema = z.object({
-  productId: z.string().min(1),
-  quantity: z.number().int().positive(),
-  price: z.string().min(1),
-  currency: z.string().length(3).toUpperCase(),
-})
+	productId: z.string().min(1),
+	quantity: z.number().int().positive(),
+	/** Catalogue price as a decimal string. */
+	unitPrice: z.string().regex(/^\d+(\.\d+)?$/, 'unitPrice must be a decimal string')
+});
 
 const ShippingAddressSchema = z.object({
-  country: z.string().length(2).toUpperCase(),
-  city: z.string().min(1),
-  line1: z.string().min(1),
-  postalCode: z.string().min(1),
-})
+	line1: z.string().min(1),
+	city: z.string().min(1),
+	postalCode: z.string().min(1),
+	country: z.string().length(2).toUpperCase()
+});
 
-const CheckoutInput = z.object({
-  cartItems: z.array(CartItemSchema).min(1),
-  shippingAddress: ShippingAddressSchema,
-})
+export const CheckoutInput = z.object({
+	cartItems: z.array(CartItemSchema).min(1),
+	shippingAddress: ShippingAddressSchema
+});
 
-interface OrderReceipt {
-  orderId: string
-  total: string
-  currency: string
-  taxRate: number
-  estimatedDelivery: string
-  traceId: string
+export interface OrderReceipt {
+	orderId: string;
+	subtotal: string;
+	tax: string;
+	total: string;
+	currency: string;
+	taxRate: number;
+	itemCount: number;
+	estimatedDelivery: string;
+	traceId: string;
 }
 
-/**
- * Atomic checkout flow demonstrating the full V1 Intellibiz pipeline:
- * 1. Identity — get authenticated user from ALS context
- * 2. Finance — calculate subtotal + destination-based tax
- * 3. Commerce — atomic transaction with WAL journaling
- * 4. SQL — pure SQL query with automatic tenancy injection
- */
 export const processOrder = defineAction({
-  input: CheckoutInput,
-  handler: async (action): Promise<OrderReceipt> => {
-    // 1. Identity: resolve authenticated user
-    const user = identity.getActiveUser()
+	input: CheckoutInput,
+	handler: async (action): Promise<OrderReceipt> => {
+		const user = identity.getActiveUser();
+		const { cartItems, shippingAddress } = action.data;
 
-    // 2. Finance: calculate subtotal + destination-based tax
-    const totals = await finance.calculateTotal({
-      items: action.data.cartItems.map(item => ({
-        price: finance.money(item.price, item.currency),
-        quantity: item.quantity,
-      })),
-      destination: {
-        country: action.data.shippingAddress.country,
-      },
-    })
+		const totals = await finance.calculateTotal({
+			items: cartItems.map(item => ({
+				price: money(item.unitPrice, 'USD'),
+				quantity: item.quantity
+			})),
+			destination: { country: shippingAddress.country }
+		});
 
-    // 3. Commerce: atomic transaction backed by WAL ledger
-    return await commerce.transaction(async (tx) => {
-      // Charge payment provider
-      const payment = await tx.payments.charge({
-        amount: totals.grandTotal,
-        orderId: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        customerEmail: `${user.id}@placeholder.com`,
-        metadata: {
-          userId: user.id,
-          tenantId: user.tenantId,
-        },
-      })
+		return commerce.transaction(async tx => {
+			const orderId = `ord_${Date.now().toString(36)}`;
 
-      // Pure SQL — tenancy is injected automatically by the Query Planner
-      await sql`
-        INSERT INTO orders (id, user_id, total_amount, tax_rate, status, store_id)
-        VALUES (
-          ${payment.id},
-          ${user.id},
-          ${totals.grandTotal.amount},
-          ${String(totals.taxRate)},
-          'paid',
-          ${user.tenantId}
-        )
-      `
+			const payment = await tx.payments.charge({
+				amount: totals.grandTotal,
+				orderId,
+				customerEmail: user.email ?? `${user.id}@example.test`
+			});
 
-      return {
-        orderId: payment.id,
-        total: totals.grandTotal.amount,
-        currency: totals.currency,
-        taxRate: totals.taxRate,
-        estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split('T')[0]!,
-        traceId: action.traceId,
-      }
-    })
-  },
-})
+			// Tenancy is injected by the planner; params stay bound.
+			const journal = sql`
+				INSERT INTO orders (id, user_id, store_id, total_amount, currency, status)
+				VALUES (${payment.id}, ${user.id}, ${user.tenantId}, ${totals.grandTotal.amount}, ${totals.currency}, ${'paid'})
+			`;
+
+			await action.emit('order.placed', {
+				orderId: payment.id,
+				total: totals.grandTotal.amount,
+				userId: user.id
+			});
+
+			const delivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+
+			return {
+				orderId: payment.id,
+				subtotal: totals.subtotal.amount,
+				tax: totals.taxTotal.amount,
+				total: totals.grandTotal.amount,
+				currency: totals.currency,
+				taxRate: totals.taxRate,
+				itemCount: cartItems.reduce((n, i) => n + i.quantity, 0),
+				estimatedDelivery: delivery.toISOString().slice(0, 10),
+				traceId: action.traceId
+			};
+		});
+	}
+});

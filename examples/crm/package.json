@@ -2,7 +2,23 @@
 	"name": "@intellibiz-examples/crm",
 	"version": "1.0.0",
 	"private": true,
-	"scripts": { "dev": "tsx src/index.ts" },
-	"dependencies": { "intellibiz": "workspace:*" },
-	"devDependencies": { "tsx": "^4.0.0" }
+	"type": "module",
+	"description": "RBAC-protected CRM API — bearer JWT → context → bitmask permission checks.",
+	"scripts": {
+		"dev": "tsx src/index.ts",
+		"start": "tsx src/index.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@intellibiz/http": "workspace:*",
+		"@intellibiz/identity": "workspace:*",
+		"intellibiz": "workspace:*",
+		"jose": "^6.2.3",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"tsx": "^4.0.0",
+		"typescript": "^5.9.3"
+	}
 }
