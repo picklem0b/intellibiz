@@ -1,6 +1,8 @@
 // ─── Core ─────────────────────────────────────────────────────────────────────
 export {
 	defineAction,
+	isAction,
+	ACTION_SYMBOL,
 	defineConfig,
 	definePlugin,
 	getContext,
@@ -13,13 +15,49 @@ export {
 	getOrigin,
 	getElapsedMs
 } from '@intellibiz/core';
-export type { IntellibizConfig, IntellibiзConfig } from '@intellibiz/core';
+export type { Action, ActionMeta } from '@intellibiz/core';
+
+// ─── Logging & Context Services ───────────────────────────────────────────────
+// `log` and `emit` are attached to every context by the kernel; `db` is
+// attached by @intellibiz/db. Plugin authors use registerContextService.
+export { createLogger } from '@intellibiz/core';
+export type { ContextLogger, LogLevel } from '@intellibiz/core';
+export {
+	registerContextService,
+	getContextServiceFactory,
+	buildRegisteredServices,
+	buildBaseContext,
+	buildJobContext,
+	buildTaskContext,
+	buildSocketContext
+} from '@intellibiz/core';
+
+// ─── Plugins ──────────────────────────────────────────────────────────────────
+export {
+	globalPluginRegistry,
+	DIContainer,
+	PluginRegistry
+} from '@intellibiz/core';
+export type { PluginDefinition, PluginHooks } from '@intellibiz/core';
+export type {
+	ContextServices,
+	JobContextMeta,
+	JobRuntimeHooks,
+	TaskContextMeta,
+	SocketContextMeta,
+	SocketDriver
+} from '@intellibiz/core';
+export type {
+	IntellibizConfig,
+	IntellibizConfigInput
+} from '@intellibiz/core';
 export type {
 	RequestContext,
 	ActionContext,
 	EventContext,
 	JobContext,
 	TaskContext,
+	SocketContext,
 	ApplicationContext,
 	SharedServices,
 	IntellibizEvents,
@@ -28,7 +66,21 @@ export type {
 } from '@intellibiz/core';
 
 // ─── Event Bus ────────────────────────────────────────────────────────────────
-export { emit, on, off } from '@intellibiz/core';
+export {
+	emit,
+	on,
+	off,
+	clearAllListeners,
+	listenerCount,
+	registeredEvents,
+	getDeadLetterQueue,
+	clearDeadLetterQueue
+} from '@intellibiz/core';
+export type {
+	EventEnvelope,
+	EventDeliveryResult,
+	DeadLetteredEvent
+} from '@intellibiz/core';
 
 // ─── Errors ───────────────────────────────────────────────────────────────────
 export {
