@@ -6,6 +6,7 @@ import {
 import { clearWebhookCache } from '@intellibiz/commerce';
 import { clearAllListeners } from '@intellibiz/core';
 import { clearGovernanceLog, getGovernanceLog } from '@intellibiz/db';
+import { time } from './time-travel.js';
 import type {
 	ChargeParams,
 	ChargeResult,
@@ -65,55 +66,6 @@ export async function withTenant<T>(
 ): Promise<T> {
 	return withContext({ tenantId }, fn);
 }
-
-// ─── Virtual Clock ────────────────────────────────────────────────────────────
-
-let _timeOffset = 0;
-
-const _originalDateNow = Date.now.bind(Date);
-
-/** Returns the virtual current time in ms. */
-export function virtualNow(): number {
-	return _originalDateNow() + _timeOffset;
-}
-
-function parseDuration(duration: string): number {
-	const match = duration.match(/^(\d+)(m|h|d|y)$/);
-	if (!match)
-		throw new Error(
-			`Invalid duration format: '${duration}'. Use '30d', '2h', '15m', '1y'.`
-		);
-	const [, amount, unit] = match;
-	const n = parseInt(amount!, 10);
-	const ms: Record<string, number> = {
-		m: n * 60 * 1000,
-		h: n * 60 * 60 * 1000,
-		d: n * 24 * 60 * 60 * 1000,
-		y: n * 365 * 24 * 60 * 60 * 1000
-	};
-	return ms[unit!]!;
-}
-
-export const time = {
-	/**
-	 * Advances the virtual clock by the given duration.
-	 * Format: '30d', '2h', '15m', '1y'
-	 *
-	 * @example
-	 * await time.advance('31d')
-	 */
-	advance(duration: string): void {
-		_timeOffset += parseDuration(duration);
-	},
-
-	reset(): void {
-		_timeOffset = 0;
-	},
-
-	offset(): number {
-		return _timeOffset;
-	}
-};
 
 // ─── Mock Payments ──────────────────────────────────────────────────────────
 
