@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import type { Context } from 'hono';
 import { resolveIdentity, type ResolverOptions } from '../resolver.js';
 
 // Minimal mock for Hono Context
 function createMockContext(opts: {
 	headers?: Record<string, string>;
 	host?: string;
-}): { req: { header: (name: string) => string | undefined }; url: string } {
+}): Context {
 	const headers = { ...opts.headers };
 	if (opts.host) headers['host'] = opts.host;
 
@@ -14,7 +15,7 @@ function createMockContext(opts: {
 			header: (name: string) => headers[name.toLowerCase()],
 		},
 		url: `http://${opts.host ?? 'localhost'}/test`,
-	} as any;
+	} as unknown as Context;
 }
 
 describe('Tenant Resolver Pipeline', () => {
