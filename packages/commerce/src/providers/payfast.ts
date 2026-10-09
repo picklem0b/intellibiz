@@ -5,6 +5,34 @@ import type {
 	RefundParams,
 	WebhookEvent
 } from './base.js';
+import {
+	hmacSha512Hex,
+	md5Hex,
+	timingSafeEqualHex
+} from '../webhooks/signature.js';
+
+/**
+ * Reproduces PHP `urlencode` semantics, which PayFast uses when building the
+ * signing string: spaces become `+` and percent-escapes are uppercase.
+ */
+function encodePayFastValue(value: string): string {
+	return encodeURIComponent(value)
+		.replace(/%20/g, '+')
+		.replace(/%[0-9a-f]{2}/gi, match => match.toUpperCase());
+}
+
+/**
+ * Builds PayFast's ordered signing string: every posted field except
+ * `signature`, as `key=urlencoded-value`, joined with `&`.
+ */
+function buildPayFastSigningString(params: URLSearchParams): string {
+	const parts: string[] = [];
+	for (const [key, value] of params.entries()) {
+		if (key === 'signature') continue;
+		parts.push(`${key}=${encodePayFastValue(value)}`);
+	}
+	return parts.join('&');
+}
 
 /**
  * PayFast payment provider adapter for South African Instant EFT.
@@ -70,15 +98,26 @@ export class PayFastProvider implements PaymentProvider {
 		void params.amount;
 	}
 
+	/**
+	 * Verifies PayFast's MD5 signature: `MD5(signingString & '' &passphrase=...)`
+	 * where `signingString` is the ordered, URL-encoded list of posted fields
+	 * excluding `signature`. The signature may be passed explicitly or read from
+	 * the `signature` field of the form body.
+	 */
 	async verifyWebhookSignature(
 		body: string,
 		signature: string
 	): Promise<boolean> {
-		// PayFast uses MD5 signature validation
-		// In production: generate signature from body params + passphrase
-		void body;
-		void signature;
-		return true;
+		const params = new URLSearchParams(body);
+		const provided = (signature || params.get('signature') || '').trim();
+		if (!provided) return false;
+
+		const signingString = buildPayFastSigningString(params);
+		const expected = md5Hex(
+			`${signingString}&passphrase=${encodePayFastValue(this.config.passphrase)}`
+		);
+
+		return timingSafeEqualHex(provided, expected);
 	}
 
 	async parseWebhookEvent(body: string): Promise<WebhookEvent> {
@@ -145,14 +184,17 @@ export class OzowProvider implements PaymentProvider {
 		void params.amount;
 	}
 
+	/**
+	 * Verifies Ozow's HMAC-SHA512 signature over the raw request body, using the
+	 * configured `apiSecret`. The signature is supplied via Ozow's `hash` header.
+	 */
 	async verifyWebhookSignature(
 		body: string,
 		signature: string
 	): Promise<boolean> {
-		// Ozow uses HMAC-SHA512 for webhook verification
-		void body;
-		void signature;
-		return true;
+		if (!signature) return false;
+		const expected = hmacSha512Hex(this.config.apiSecret, body);
+		return timingSafeEqualHex(signature, expected);
 	}
 
 	async parseWebhookEvent(body: string): Promise<WebhookEvent> {

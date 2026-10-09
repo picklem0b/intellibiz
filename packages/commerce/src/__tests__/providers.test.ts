@@ -69,17 +69,7 @@ describe('StripeProvider', () => {
 		expect(r1.id).not.toBe(r2.id);
 	});
 
-	it('verifies webhook signature when secret is configured', async () => {
-		const provider = new StripeProvider(stripeConfig);
-		const result = await provider.verifyWebhookSignature('body', 'sig');
-		expect(result).toBe(true);
-	});
-
-	it('rejects webhook signature when secret is not configured', async () => {
-		const provider = new StripeProvider({ secretKey: 'sk_test_123' });
-		const result = await provider.verifyWebhookSignature('body', 'sig');
-		expect(result).toBe(false);
-	});
+	// Signature verification is covered exhaustively in webhook-signatures.test.ts.
 
 	it('parses webhook event from body', async () => {
 		const provider = new StripeProvider(stripeConfig);

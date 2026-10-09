@@ -5,6 +5,11 @@ import type {
 	RefundParams,
 	WebhookEvent
 } from './base.js';
+import {
+	hmacSha256Hex,
+	parseStripeSignatureHeader,
+	timingSafeEqualHex
+} from '../webhooks/signature.js';
 
 /**
  * Stripe payment provider adapter for @intellibiz/commerce.
@@ -25,6 +30,11 @@ export interface StripeConfig {
 	webhookSecret?: string;
 	/** API version pin. Default: '2024-12-18'. */
 	apiVersion?: string;
+	/**
+	 * Maximum accepted age of a webhook signature, in seconds. Guards against
+	 * replay attacks. Stripe's own default is 300s. Set to 0 to disable.
+	 */
+	webhookToleranceSeconds?: number;
 }
 
 export class StripeProvider implements PaymentProvider {
@@ -71,17 +81,37 @@ export class StripeProvider implements PaymentProvider {
 		void minorUnits;
 	}
 
+	/**
+	 * Verifies a `Stripe-Signature` header using the documented Stripe scheme:
+	 * `HMAC-SHA256(webhookSecret, `${t}.${rawBody}`)` compared against every
+	 * `v1` value in the header, with an optional replay-tolerance window.
+	 *
+	 * @param body       Raw request body exactly as received (not re-serialized)
+	 * @param signature  Full `Stripe-Signature` header value
+	 */
 	async verifyWebhookSignature(
 		body: string,
 		signature: string
 	): Promise<boolean> {
-		if (!this.config.webhookSecret) return false;
+		const secret = this.config.webhookSecret;
+		if (!secret || !signature) return false;
 
-		// In production: use stripe.webhooks.constructEvent()
-		// V1 stub: basic timing-safe comparison
-		void body;
-		void signature;
-		return true;
+		const { timestamp, signatures } = parseStripeSignatureHeader(signature);
+		if (timestamp === null || signatures.length === 0) return false;
+
+		const tolerance = this.config.webhookToleranceSeconds ?? 300;
+		if (tolerance > 0) {
+			const signedAt = Number(timestamp);
+			if (!Number.isFinite(signedAt)) return false;
+			const ageSeconds = Math.abs(Math.floor(Date.now() / 1000) - signedAt);
+			if (ageSeconds > tolerance) return false;
+		}
+
+		// Stripe signs the literal `${t}.${body}` string with the raw `t` value.
+		const expected = hmacSha256Hex(secret, `${timestamp}.${body}`);
+		return signatures.some(candidate =>
+			timingSafeEqualHex(candidate, expected)
+		);
 	}
 
 	async parseWebhookEvent(body: string): Promise<WebhookEvent> {
