@@ -1,29 +1,47 @@
-- uses: actions/checkout@v4
+name: CI
 
-# Ensure Node is installed first
-- uses: actions/setup-node@v4
-  with:
-     node-version: 22
-     cache: pnpm
+on:
+  push:
+    branches: [main]
+  pull_request:
 
-# Then configure pnpm
-- uses: pnpm/action-setup@v3
-  with:
-     # optional: pin a pnpm version
-     version: 8
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
-# Debug: show versions (optional, helpful for CI debugging)
-- name: Show node & pnpm versions
-  run: |
-     node -v
-     pnpm -v
+jobs:
+  build-test:
+    name: Build, typecheck & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-# Install deps at workspace root (ensure workspace install in monorepo)
-- name: Install dependencies
-  run: pnpm -w install --frozen-lockfile
+      # pnpm/action-setup must run BEFORE setup-node's `cache: pnpm`.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
 
-- name: Build
-  run: pnpm -w build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
 
-- name: Test
-  run: pnpm -w test
+      - name: Show versions
+        run: |
+          node -v
+          pnpm -v
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Smoke-test the examples
+        run: pnpm test:examples
