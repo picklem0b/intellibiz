@@ -55,7 +55,7 @@ describe('Governance Sudo Module', () => {
 
 				const log = getGovernanceLog();
 				expect(log.length).toBe(1);
-				expect(log[0]!.type).toBe('SUDO_ACCESS');
+				expect(log[0]!.type).toBe('GOVERNANCE_SUDO_ACCESS');
 				expect(log[0]!.userId).toBe('user_test');
 				expect(log[0]!.tenantId).toBe('tenant_test');
 				expect(log[0]!.traceId).toBe('ibiz_trc_000000000000test_gov');
@@ -95,7 +95,7 @@ describe('Governance Sudo Module', () => {
 
 				const log = getGovernanceLog();
 				expect(log.length).toBe(1);
-				expect(log[0]!.type).toBe('RAW_QUERY');
+				expect(log[0]!.type).toBe('GOVERNANCE_RAW_QUERY');
 				expect(log[0]!.sql).toBe(sql);
 			});
 		});
@@ -151,9 +151,9 @@ describe('Governance Sudo Module', () => {
 
 				const log = getGovernanceLog();
 				expect(log.length).toBe(3);
-				expect(log[0]!.type).toBe('SUDO_ACCESS');
-				expect(log[1]!.type).toBe('SUDO_ACCESS');
-				expect(log[2]!.type).toBe('RAW_QUERY');
+				expect(log[0]!.type).toBe('GOVERNANCE_SUDO_ACCESS');
+				expect(log[1]!.type).toBe('GOVERNANCE_SUDO_ACCESS');
+				expect(log[2]!.type).toBe('GOVERNANCE_RAW_QUERY');
 			});
 		});
 	});

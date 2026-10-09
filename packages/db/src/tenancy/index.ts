@@ -7,6 +7,8 @@ export interface GovernanceRecord {
 	tenantId: string;
 	traceId: string;
 	timestamp: number;
+	/** Present for GOVERNANCE_RAW_QUERY — the exact SQL string executed. */
+	sql?: string;
 }
 
 const governanceLog: GovernanceRecord[] = [];
@@ -19,14 +21,18 @@ export function clearGovernanceLog(): void {
 	governanceLog.splice(0);
 }
 
-function recordGovernance(type: GovernanceRecord['type']): void {
+function recordGovernance(
+	type: GovernanceRecord['type'],
+	sql?: string
+): void {
 	const ctx = getContext();
 	governanceLog.push({
 		type,
 		userId: ctx.userId,
 		tenantId: ctx.tenantId,
 		traceId: ctx.traceId,
-		timestamp: Date.now()
+		timestamp: Date.now(),
+		...(sql !== undefined ? { sql } : {})
 	});
 }
 
@@ -69,7 +75,7 @@ export const db = {
 	 * const result = await db.raw('SELECT custom_database_func()')
 	 */
 	raw(sqlString: string): SqlQuery {
-		recordGovernance('GOVERNANCE_RAW_QUERY');
+		recordGovernance('GOVERNANCE_RAW_QUERY', sqlString);
 		return { text: sqlString, params: [], tenantId: '__raw__' };
 	}
 };
