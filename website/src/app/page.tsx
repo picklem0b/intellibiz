@@ -1,391 +1,491 @@
-import Link from "next/link";
-import {
-  Zap,
-  Shield,
-  BookOpen,
-  ArrowRight,
-  Check,
-  Code2,
-  Database,
-  CreditCard,
-  Lock,
-  Scale,
-  RefreshCw,
-  Terminal,
-} from "lucide-react";
-import { CodeBlock } from "@/components/code-block";
+import Link from 'next/link';
+import { CodeBlock } from '@/components/code-block';
+import { Journal } from '@/components/home/journal';
+import { InstallLine } from '@/components/home/install';
+import { getDocNav } from '@/lib/docs';
+import { SITE } from '@/lib/site';
 
-const FEATURES = [
-  {
-    icon: Scale,
-    title: "Fiscal Precision",
-    description:
-      "128-bit fixed-point decimal arithmetic via Rust. Zero floating-point errors in money math.",
-  },
-  {
-    icon: Shield,
-    title: "Context-Aware Security",
-    description:
-      "Multi-tenancy isolation injected automatically at the engine layer. Impossible to leak data.",
-  },
-  {
-    icon: BookOpen,
-    title: "Immutable Audit",
-    description:
-      "WAL journal entries with SHA-256 block chaining. Tamper-proof accountability for every state change.",
-  },
-  {
-    icon: RefreshCw,
-    title: "Resilient Settlement",
-    description:
-      "Idempotent webhook engine with bank-reconciliation retry state machines. Zero dropped transactions.",
-  },
-  {
-    icon: Zap,
-    title: "Native Performance",
-    description:
-      "Rust-powered via NAPI-RS. CPU-intensive work runs on worker threads without blocking Node.js.",
-  },
-  {
-    icon: Lock,
-    title: "100% Escape Hatches",
-    description:
-      "Drop to raw SQL, raw connections, or raw HTTP streams whenever needed. Zero framework lock-in.",
-  },
-];
+const CHECKOUT = `import { defineAction, commerce, finance, sql } from 'intellibiz'
+import { z } from 'zod'
 
-const COMPARISON_ROWS = [
-  {
-    task: "Price Math",
-    traditional: "19.99 * 1.15 ❌ Risk: float error",
-    intellibiz: "money(19.99).multiply(1.15) ✅ Exact 128-bit",
-  },
-  {
-    task: "DB Isolation",
-    traditional: "WHERE org_id = req.user.orgId ❌ Easy to forget",
-    intellibiz: "Auto-injected at DB level ✅ Impossible to leak",
-  },
-  {
-    task: "Audit Logs",
-    traditional: "Manual logging in every route ❌",
-    intellibiz: "Automatic SHA-256 WAL ✅",
-  },
-  {
-    task: "Package Count",
-    traditional: "~25 fragmented packages ❌",
-    intellibiz: "1 Metapackage ✅",
-  },
-];
+export const checkout = defineAction({
+  input: z.object({
+    orderId: z.string().uuid(),
+    price: z.string(),
+    email: z.string().email(),
+  }),
+  handler: async (action) => {
+    const subtotal = finance.money(action.data.price, 'USD')
+    const total = subtotal.add(subtotal.multiply('0.15'))
 
-const QUICKSTART_CODE = `import { defineAction, commerce, finance, identity, sql } from 'intellibiz'
+    return await commerce.transaction(async (tx) => {
+      const payment = await tx.payments.charge({
+        amount: total,
+        orderId: action.data.orderId,
+        customerEmail: action.data.email,
+      })
 
-export const processCheckout = defineAction(async (action) => {
-  // 1. Get authenticated user from AsyncLocalStorage context
-  const user = identity.getActiveUser()
+      await sql\`
+        UPDATE orders SET status = 'PAID'
+        WHERE id = \${action.data.orderId}
+      \`
 
-  // 2. Exact fixed-point monetary math (Executed in Rust)
-  const itemPrice = finance.money(150.0, 'USD')
-  const total = itemPrice.multiply(1.15) // Add 15% Tax
-
-  // 3. Atomic transaction backed by Rust WAL Ledger
-  return await commerce.transaction(async (tx) => {
-    const payment = await tx.payments.charge({
-      amount: total,
-      orderId: action.data.orderId,
+      return { paymentId: payment.id, total: total.format() }
     })
-
-    // Pure SQL — Tenancy injected automatically!
-    await tx.sql\`
-      INSERT INTO orders (id, amount, status)
-      VALUES (\${payment.orderId}, \${total.amount}, 'PAID')
-    \`
-
-    return { success: true, totalPaid: total.format() }
-  })
+  },
 })`;
 
-const CONFIG_CODE = `import { defineConfig } from 'intellibiz/config'
-
-export default defineConfig({
-  modules: ['commerce', 'finance', 'identity', 'db'],
-
-  database: {
-    driver: 'postgres',
-    url: process.env.DATABASE_URL!,
-  },
-
-  tenancy: {
-    strategy: 'column',
-    key: 'org_id',
-    type: 'uuid',
-    strict: true,
-  },
-
-  currency: { base: 'USD', rounding: 'bankers' },
-  taxation: { provider: 'internal', defaultRate: 0.15 },
-  ledger: { mode: 'atomic' },
-})`;
-
-const MODULES = [
-  { name: "@intellibiz/core", description: "Kernel, ALS context, event bus, plugin system" },
-  { name: "@intellibiz/db", description: "SQL tagged templates, tenancy injection, query planner" },
-  { name: "@intellibiz/finance", description: "Fixed-point money, tax calculator, currency registry" },
-  { name: "@intellibiz/commerce", description: "Payments, webhooks, WAL transactions" },
-  { name: "@intellibiz/identity", description: "JWT, RBAC, tenant resolution" },
-  { name: "@intellibiz/http", description: "Hono-powered routing, response inference" },
+const NOTES = [
+	{
+		title: 'Input is checked first',
+		body: 'The Zod schema runs before the handler. A bad request never reaches your logic.'
+	},
+	{
+		title: 'Money stays a string',
+		body: 'Amounts go in as strings and come out as Money values. No float ever holds a price.'
+	},
+	{
+		title: 'Charge and write succeed together',
+		body: 'If the SQL fails after the charge, the transaction refunds the payment in reverse order.'
+	},
+	{
+		title: 'The query carries no tenant filter',
+		body: 'The query planner adds the current tenant to the UPDATE for you.'
+	}
 ];
+
+const INVARIANTS = [
+	{
+		rule: 'Money is never a number.',
+		detail: 'Every amount is a finance.money() value, so 0.1 + 0.2 is 0.3.'
+	},
+	{
+		rule: 'Tenancy is never optional.',
+		detail: 'Each query is rewritten by the planner to include the current tenant.'
+	},
+	{
+		rule: 'State changes are ledger-backed.',
+		detail: "An event hasn't happened until it is in the hash-chained journal."
+	},
+	{
+		rule: 'The event loop is never blocked.',
+		detail: 'Heavy work runs on Rust worker threads through NAPI-RS.'
+	},
+	{
+		rule: 'Context is never called ctx.',
+		detail: "Handlers receive req, action, event, job, task or app, so a function's trigger is readable at a glance."
+	}
+];
+
+const CRATES = [
+	['ledger', 'Double-entry journal with SHA-256 block chaining'],
+	['formula-engine', 'Fixed-point decimal arithmetic'],
+	['query-planner', 'Tenant and soft-delete injection into SQL'],
+	['permissions', 'Bitmask role and attribute checks'],
+	['rule-engine', 'Multi-tier compliance pipeline'],
+	['scheduler', 'Timer wheels and priority queues'],
+	['crypto', 'Ed25519, SHA-256, AES-GCM, Argon2'],
+	['serializer', 'Binary packing and zstd compression'],
+	['bindings', 'The NAPI-RS entry point']
+];
+
+const PACKAGES: { group: string; rows: [string, string][] }[] = [
+	{
+		group: 'Core',
+		rows: [
+			[
+				'intellibiz',
+				'The one import most apps need. Re-exports everything below.'
+			],
+			[
+				'@intellibiz/core',
+				'Context kernel, defineAction, defineConfig, definePlugin, event bus'
+			],
+			[
+				'@intellibiz/db',
+				'sql tagged templates, Kysely proxy, tenant query planner'
+			],
+			['@intellibiz/finance', 'Money, tax calculator, currency registry'],
+			[
+				'@intellibiz/commerce',
+				'Payment providers, webhook dedup, transactions, bank retry'
+			],
+			['@intellibiz/identity', 'JWT, RBAC, tenant resolution'],
+			[
+				'@intellibiz/http',
+				'Hono wrapper, request context, middleware, routing'
+			]
+		]
+	},
+	{
+		group: 'Tooling',
+		rows: [
+			['@intellibiz/cli', 'dev, build, audit and dashboard commands'],
+			[
+				'@intellibiz/testing',
+				'Time travel, mock gateway, tenant context, ledger assertions'
+			],
+			['create-intellibiz', 'Scaffold a new application'],
+			['@intellibiz/sdk', 'Client SDK']
+		]
+	},
+	{
+		group: 'Plugins',
+		rows: [
+			['plugin-postgres, mysql, sqlite', 'Database drivers'],
+			['plugin-stripe', 'Payments provider'],
+			['plugin-redis, s3', 'Cache and object storage'],
+			['plugin-aws, azure, gcp', 'Cloud providers'],
+			['plugin-openai, anthropic', 'AI providers']
+		]
+	}
+];
+
+function Compare({
+	title,
+	before,
+	after,
+	note
+}: {
+	title: string;
+	before: { code: string; lang?: string; caption: string };
+	after: { code: string; caption: string };
+	note?: string;
+}) {
+	return (
+		<div className='border-t border-border py-8'>
+			<h3 className='text-lg font-semibold'>{title}</h3>
+			<div className='mt-4 grid gap-4 lg:grid-cols-2'>
+				<div className='min-w-0'>
+					<p className='mb-1 text-sm text-muted-foreground'>
+						{before.caption}
+					</p>
+					<CodeBlock
+						code={before.code}
+						language={before.lang ?? 'typescript'}
+						filename='express'
+						className='my-0'
+					/>
+				</div>
+				<div className='min-w-0'>
+					<p className='mb-1 text-sm text-muted-foreground'>
+						{after.caption}
+					</p>
+					<CodeBlock
+						code={after.code}
+						filename='intellibiz'
+						className='my-0'
+					/>
+				</div>
+			</div>
+			{note && (
+				<p className='mt-3 max-w-measure text-sm text-muted-foreground'>
+					{note}
+				</p>
+			)}
+		</div>
+	);
+}
 
 export default function HomePage() {
-  return (
-    <div className="relative">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-brand-500/5" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 sm:py-32 relative">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center rounded-full border border-brand-500/20 bg-brand-500/5 px-4 py-1.5 text-sm text-brand-600 dark:text-brand-400">
-              <Zap className="mr-1.5 h-3.5 w-3.5" />
-              TypeScript + Native Rust
-            </div>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
-              The Operating System for{" "}
-              <span className="bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent">
-                Business Logic
-              </span>
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground leading-relaxed sm:text-xl max-w-2xl mx-auto">
-              A unified, fiscally-aware backend engine that eliminates the{" "}
-              <strong className="text-foreground">Anxiety of Correctness</strong>{" "}
-              around Tax, Money, Legal, and Audit. Build commerce, fintech, and
-              SaaS with zero floating-point errors and automatic tenancy
-              isolation.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/docs/quick-start"
-                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 hover:bg-brand-500 transition-colors"
-              >
-                Get Started
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/docs"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-6 py-3 text-sm font-semibold hover:bg-muted transition-colors"
-              >
-                <BookOpen className="h-4 w-4" />
-                Read the Docs
-              </Link>
-            </div>
-            <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-green-500" />
-                Apache 2.0
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-green-500" />
-                TypeScript 7+
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Check className="h-4 w-4 text-green-500" />
-                Node.js 22+
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
+	const floatResult = String(19.99 * 1.15);
+	const groups = getDocNav();
 
-      {/* Code Example */}
-      <section className="border-b border-border py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Build Checkout in Minutes
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Transport-agnostic actions with automatic tenancy, audit logging,
-              and atomic transactions.
-            </p>
-          </div>
-          <div className="mx-auto max-w-4xl">
-            <CodeBlock
-              code={QUICKSTART_CODE}
-              language="typescript"
-              filename="src/actions/checkout.ts"
-              showLineNumbers
-            />
-          </div>
-        </div>
-      </section>
+	return (
+		<>
+			{/* Hero */}
+			<section className='border-b border-border'>
+				<div className='mx-auto grid max-w-[88rem] items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.05fr] lg:py-24'>
+					<div>
+						<h1 className='text-5xl font-extrabold leading-[1.02] tracking-[-0.035em] sm:text-6xl xl:text-7xl'>
+							Business logic that balances.
+						</h1>
+						<p className='mt-6 max-w-[34rem] text-lg leading-relaxed text-muted-foreground'>
+							IntelliBiz is a TypeScript backend engine with a
+							Rust core. Money is a decimal type, every query is
+							scoped to its tenant, and every state change lands
+							in a hash-chained ledger. You write the business
+							rules. The engine keeps the books.
+						</p>
+						<div className='mt-8 flex flex-wrap items-center gap-3'>
+							<Link
+								href='/docs/quick-start'
+								className='rounded bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 dark:bg-brand-500 dark:text-brand-950 dark:hover:bg-brand-400'
+							>
+								Read the quick start
+							</Link>
+							<Link
+								href='/docs'
+								className='rounded border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted'
+							>
+								Browse the docs
+							</Link>
+						</div>
+						<div className='mt-6'>
+							<InstallLine command='pnpm add intellibiz' />
+						</div>
+						<p className='mt-4 text-sm text-muted-foreground'>
+							{SITE.license} licensed. Needs Node {SITE.node} or
+							newer and the Rust toolchain for native builds.
+						</p>
+					</div>
+					<Journal />
+				</div>
+			</section>
 
-      {/* Features Grid */}
-      <section className="border-b border-border py-20 bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Why IntelliBiz?
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Built for businesses where correctness is a legal obligation, not
-              a best practice.
-            </p>
-          </div>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((feature) => (
-              <div
-                key={feature.title}
-                className="group rounded-xl border border-border bg-background p-6 hover:border-brand-500/50 hover:shadow-lg transition-all"
-              >
-                <div className="mb-4 inline-flex rounded-lg bg-brand-500/10 p-2.5">
-                  <feature.icon className="h-5 w-5 text-brand-600 dark:text-brand-400" />
-                </div>
-                <h3 className="text-lg font-semibold">{feature.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+			{/* Invariants */}
+			<section className='mx-auto max-w-[88rem] px-4 py-20 sm:px-6'>
+				<div className='grid gap-10 lg:grid-cols-[22rem_1fr]'>
+					<div>
+						<h2 className='text-3xl font-bold tracking-tight'>
+							Five rules the engine won&apos;t let you break
+						</h2>
+						<p className='mt-3 text-muted-foreground'>
+							These are the system invariants from the
+							project&apos;s source-of-truth document. Code that
+							violates one is a bug, not a style choice.
+						</p>
+						<Link
+							href='/docs/agent'
+							className='mt-4 inline-block text-sm font-medium text-brand-700 underline underline-offset-4 dark:text-brand-400'
+						>
+							Read the full invariants
+						</Link>
+					</div>
+					<dl className='divide-y divide-border border-y border-border'>
+						{INVARIANTS.map(i => (
+							<div
+								key={i.rule}
+								className='grid gap-1 py-4 sm:grid-cols-[18rem_1fr] sm:gap-6'
+							>
+								<dt className='font-semibold'>{i.rule}</dt>
+								<dd className='text-muted-foreground'>
+									{i.detail}
+								</dd>
+							</div>
+						))}
+					</dl>
+				</div>
+			</section>
 
-      {/* Comparison Table */}
-      <section className="border-b border-border py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Express vs. IntelliBiz
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Stop gluing libraries together. Start building your business.
-            </p>
-          </div>
-          <div className="mx-auto max-w-4xl overflow-hidden rounded-xl border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-6 py-3 text-left font-semibold">Task</th>
-                  <th className="px-6 py-3 text-left font-semibold text-muted-foreground">
-                    Traditional Express / NestJS
-                  </th>
-                  <th className="px-6 py-3 text-left font-semibold text-brand-600 dark:text-brand-400">
-                    IntelliBiz Engine
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON_ROWS.map((row) => (
-                  <tr key={row.task} className="border-b border-border last:border-0">
-                    <td className="px-6 py-4 font-medium">{row.task}</td>
-                    <td className="px-6 py-4 text-muted-foreground font-mono text-xs">
-                      {row.traditional}
-                    </td>
-                    <td className="px-6 py-4 font-mono text-xs">
-                      {row.intellibiz}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+			{/* Code */}
+			<section className='border-y border-border bg-muted/50'>
+				<div className='mx-auto max-w-[88rem] px-4 py-20 sm:px-6'>
+					<h2 className='max-w-2xl text-3xl font-bold tracking-tight'>
+						A checkout, start to finish
+					</h2>
+					<p className='mt-3 max-w-measure text-muted-foreground'>
+						One action: validate, price with exact arithmetic,
+						charge, and update the order. It can be called from an
+						HTTP route, a queue job or a cron task without changes.
+					</p>
+					<div className='mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]'>
+						<CodeBlock
+							code={CHECKOUT}
+							filename='src/actions/checkout.ts'
+							showLineNumbers
+							className='my-0'
+						/>
+						<ol className='space-y-5 self-start'>
+							{NOTES.map(n => (
+								<li
+									key={n.title}
+									className='border-l-2 border-brand-600 pl-4 dark:border-brand-400'
+								>
+									<p className='font-semibold'>{n.title}</p>
+									<p className='mt-1 text-sm leading-relaxed text-muted-foreground'>
+										{n.body}
+									</p>
+								</li>
+							))}
+						</ol>
+					</div>
+				</div>
+			</section>
 
-      {/* Configuration Example */}
-      <section className="border-b border-border py-20 bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-12 lg:grid-cols-2 items-center">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                One Config File. Zero Guesswork.
-              </h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Intellibiz is configured through a single, type-safe config
-                file. Zod validates every field at boot — no runtime surprises.
-              </p>
-              <ul className="mt-8 space-y-3">
-                {[
-                  "Multi-tenancy with column or schema isolation",
-                  "Fixed-point currency with Banker's rounding",
-                  "SHA-256 immutable audit ledger",
-                  "Plugin system with dependency injection",
-                  "Environment-aware with dry-run mode",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <CodeBlock
-              code={CONFIG_CODE}
-              language="typescript"
-              filename="intellibiz.config.ts"
-              showLineNumbers
-            />
-          </div>
-        </div>
-      </section>
+			{/* Compare */}
+			<section className='mx-auto max-w-[88rem] px-4 py-20 sm:px-6'>
+				<h2 className='text-3xl font-bold tracking-tight'>
+					What changes from a typical Node stack
+				</h2>
+				<p className='mt-3 max-w-measure text-muted-foreground'>
+					Same job, with the easy-to-forget parts moved into the
+					engine.
+				</p>
+				<div className='mt-8'>
+					<Compare
+						title='Adding tax to a price'
+						before={{
+							caption: `Floats. 19.99 * 1.15 evaluates to ${floatResult} in JavaScript.`,
+							code: `const total = 19.99 * 1.15\n// ${floatResult}`
+						}}
+						after={{
+							caption:
+								'Decimal. The result is exact, and rounding is a rule you configure.',
+							code: `const price = finance.money('19.99', 'USD')\nconst total = price.add(price.multiply('0.15'))\ntotal.amount // '22.99'`
+						}}
+					/>
+					<Compare
+						title='Keeping tenants apart'
+						before={{
+							caption:
+								"Every query repeats the filter. One miss leaks a customer's data.",
+							code: `const rows = await db.query(\n  'SELECT * FROM orders WHERE org_id = $1 AND status = $2',\n  [req.user.orgId, status]\n)`
+						}}
+						after={{
+							caption:
+								'The planner adds the tenant and the soft-delete check.',
+							code: `const rows = await sql\`\n  SELECT * FROM orders WHERE status = \${status}\n\``
+						}}
+						note='Cross-tenant access is still possible when you need it: db.sudo() exists, and it writes a governance warning to the ledger.'
+					/>
+					<Compare
+						title='Returning a response'
+						before={{
+							caption: 'Handlers talk to the response object.',
+							code: `app.get('/orders', async (req, res) => {\n  const rows = await loadOrders(req)\n  res.json(rows)\n})`
+						}}
+						after={{
+							caption:
+								'Handlers return a value. The router infers the response.',
+							code: `http.get('/orders', async (req) => {\n  return await sql\`SELECT * FROM orders\`\n})`
+						}}
+					/>
+				</div>
+			</section>
 
-      {/* Modules */}
-      <section className="border-b border-border py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              The Shippable Five
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Five tightly-integrated core packages. One metapackage.
-            </p>
-          </div>
-          <div className="mx-auto grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl">
-            {MODULES.map((mod) => (
-              <div
-                key={mod.name}
-                className="rounded-lg border border-border bg-background p-4 hover:border-brand-500/50 transition-colors"
-              >
-                <code className="text-sm font-semibold text-brand-600 dark:text-brand-400">
-                  {mod.name}
-                </code>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {mod.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+			{/* Architecture */}
+			<section className='border-y border-border bg-muted/50'>
+				<div className='mx-auto max-w-[88rem] px-4 py-20 sm:px-6'>
+					<h2 className='text-3xl font-bold tracking-tight'>
+						TypeScript on top, Rust underneath
+					</h2>
+					<p className='mt-3 max-w-measure text-muted-foreground'>
+						You work in TypeScript. CPU-heavy and safety-critical
+						work is handed across a NAPI-RS boundary to nine Rust
+						crates, and falls back to TypeScript when the native
+						addon isn&apos;t available on a platform.
+					</p>
+					<div className='mt-8 overflow-hidden rounded border border-border bg-background'>
+						<div className='border-b border-border px-5 py-4'>
+							<p className='font-semibold'>TypeScript layer</p>
+							<p className='mt-1 text-sm text-muted-foreground'>
+								Actions, specialised contexts (req, action,
+								event, job, task, app), the HTTP router, the sql
+								engine, plugins, the CLI.
+							</p>
+						</div>
+						<div className='green-bar border-b border-border px-5 py-3 text-center text-sm'>
+							<span className='font-mono'>NAPI-RS boundary</span>
+							<span className='text-muted-foreground'>
+								{' '}
+								&nbsp;async workers, event loop never waits
+							</span>
+						</div>
+						<ul className='grid divide-y divide-border sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-3'>
+							{CRATES.map(([name, what]) => (
+								<li
+									key={name}
+									className='border-border px-5 py-4 sm:border-b lg:[&:nth-last-child(-n+3)]:border-b-0'
+								>
+									<p className='font-mono text-sm font-semibold'>
+										crates/{name}
+									</p>
+									<p className='mt-0.5 text-sm text-muted-foreground'>
+										{what}
+									</p>
+								</li>
+							))}
+						</ul>
+					</div>
+					<Link
+						href='/docs/architecture/rust-boundary'
+						className='mt-4 inline-block text-sm font-medium text-brand-700 underline underline-offset-4 dark:text-brand-400'
+					>
+						How the boundary works
+					</Link>
+				</div>
+			</section>
 
-      {/* CTA Section */}
-      <section className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Ready to Build?
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Get started in under 5 minutes. Install IntelliBiz, configure
-              your engine, and write your first action.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/docs/quick-start"
-                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 hover:bg-brand-500 transition-colors"
-              >
-                <Terminal className="h-4 w-4" />
-                Quick Start Guide
-              </Link>
-              <Link
-                href="/docs/api"
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-6 py-3 text-sm font-semibold hover:bg-muted transition-colors"
-              >
-                <Code2 className="h-4 w-4" />
-                API Reference
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+			{/* Packages */}
+			<section className='mx-auto max-w-[88rem] px-4 py-20 sm:px-6'>
+				<h2 className='text-3xl font-bold tracking-tight'>
+					What&apos;s in the box
+				</h2>
+				<p className='mt-3 max-w-measure text-muted-foreground'>
+					Install{' '}
+					<code className='font-mono text-sm'>intellibiz</code> and
+					you get the core set. Import from a subpath like{' '}
+					<code className='font-mono text-sm'>
+						intellibiz/finance
+					</code>{' '}
+					when you want a smaller bundle.
+				</p>
+				<div className='mt-8 grid gap-10 lg:grid-cols-3'>
+					{PACKAGES.map(g => (
+						<div key={g.group}>
+							<h3 className='border-b-2 border-foreground/70 pb-2 font-semibold'>
+								{g.group}
+							</h3>
+							<dl className='divide-y divide-border'>
+								{g.rows.map(([name, what]) => (
+									<div key={name} className='py-3'>
+										<dt className='font-mono text-[0.8125rem] font-semibold'>
+											{name}
+										</dt>
+										<dd className='mt-0.5 text-sm text-muted-foreground'>
+											{what}
+										</dd>
+									</div>
+								))}
+							</dl>
+						</div>
+					))}
+				</div>
+			</section>
+
+			{/* Doc map */}
+			<section className='border-t border-border'>
+				<div className='mx-auto max-w-[88rem] px-4 py-16 sm:px-6'>
+					<h2 className='text-3xl font-bold tracking-tight'>
+						Find your way around the docs
+					</h2>
+					<div className='mt-8 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4'>
+						{groups.map(g => (
+							<div key={g.title}>
+								<h3 className='font-semibold'>
+									{g.title}{' '}
+									<span className='font-normal text-muted-foreground'>
+										({g.items.length})
+									</span>
+								</h3>
+								<ul className='mt-2 space-y-1 text-sm'>
+									{g.items.slice(0, 5).map(i => (
+										<li key={i.href}>
+											<Link
+												href={i.href}
+												className='text-muted-foreground hover:text-foreground hover:underline'
+											>
+												{i.title}
+											</Link>
+										</li>
+									))}
+									{g.items.length > 5 && (
+										<li>
+											<Link
+												href={g.items[0].href}
+												className='text-brand-700 hover:underline dark:text-brand-400'
+											>
+												and {g.items.length - 5} more
+											</Link>
+										</li>
+									)}
+								</ul>
+							</div>
+						))}
+					</div>
+				</div>
+			</section>
+		</>
+	);
 }

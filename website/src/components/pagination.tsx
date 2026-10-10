@@ -1,42 +1,48 @@
-import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from 'next/link';
 
-interface PaginationProps {
-  prev?: { title: string; href: string } | null;
-  next?: { title: string; href: string } | null;
+interface Side {
+	title: string;
+	href: string;
 }
 
-export function Pagination({ prev, next }: PaginationProps) {
-  return (
-    <div className="flex items-center justify-between border-t border-border pt-8 mt-12">
-      {prev ? (
-        <Link
-          href={prev.href}
-          className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
-          <div>
-            <p className="text-xs text-muted-foreground">Previous</p>
-            <p className="font-medium">{prev.title}</p>
-          </div>
-        </Link>
-      ) : (
-        <div />
-      )}
-      {next ? (
-        <Link
-          href={next.href}
-          className="group flex items-center gap-2 text-right text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <div>
-            <p className="text-xs text-muted-foreground">Next</p>
-            <p className="font-medium">{next.title}</p>
-          </div>
-          <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
-      ) : (
-        <div />
-      )}
-    </div>
-  );
+export function Pagination({
+	prev,
+	next
+}: {
+	prev?: Side | null;
+	next?: Side | null;
+}) {
+	return (
+		<nav
+			aria-label='Pager'
+			className='mt-14 grid gap-3 border-t border-border pt-6 sm:grid-cols-2'
+		>
+			{prev ? (
+				<Link
+					href={prev.href}
+					className='rounded border border-border px-4 py-3 hover:bg-muted'
+				>
+					<span className='block text-xs text-muted-foreground'>
+						Previous
+					</span>
+					<span className='font-medium'>{prev.title}</span>
+				</Link>
+			) : (
+				<span />
+			)}
+			{next ? (
+				<Link
+					href={next.href}
+					className='rounded border border-border px-4 py-3 text-right hover:bg-muted'
+				>
+					<span className='block text-xs text-muted-foreground'>
+						Next
+					</span>
+					<span className='font-medium'>{next.title}</span>
+				</Link>
+			) : (
+				<span />
+			)}
+		</nav>
+	);
 }

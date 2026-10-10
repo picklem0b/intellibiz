@@ -1,99 +1,94 @@
-import Link from "next/link";
-import {
-  Zap,
-  ArrowRight,
-  BookOpen,
-  Code2,
-  Shield,
-  Database,
-  CreditCard,
-  Lock,
-} from "lucide-react";
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { Pagination } from "@/components/pagination";
+import Link from 'next/link';
+import { getFullNav } from '@/lib/nav';
 
-const QUICK_LINKS = [
-  {
-    icon: BookOpen,
-    title: "Getting Started",
-    description: "Install IntelliBiz and write your first action in 5 minutes.",
-    href: "/docs/installation",
-  },
-  {
-    icon: Code2,
-    title: "Core Concepts",
-    description: "Understand the context system, actions, events, and transactions.",
-    href: "/docs/concepts/context",
-  },
-  {
-    icon: Database,
-    title: "Database",
-    description: "SQL tagged templates with automatic tenancy injection.",
-    href: "/docs/modules/db",
-  },
-  {
-    icon: CreditCard,
-    title: "Commerce",
-    description: "Payment providers, webhooks, and atomic transactions.",
-    href: "/docs/modules/commerce",
-  },
-  {
-    icon: Shield,
-    title: "Identity",
-    description: "JWT verification, RBAC, and tenant resolution.",
-    href: "/docs/modules/identity",
-  },
-  {
-    icon: Lock,
-    title: "API Reference",
-    description: "Complete API documentation for all modules.",
-    href: "/docs/api",
-  },
+export const metadata = { title: 'Documentation' };
+
+const ENTRY_POINTS = [
+	{
+		title: 'Install and run',
+		body: 'Set up Node, pnpm and the Rust toolchain, then add the package.',
+		href: '/docs/installation'
+	},
+	{
+		title: 'Write your first action',
+		body: 'A checkout action with money, a transaction and a ledger entry.',
+		href: '/docs/quick-start'
+	},
+	{
+		title: 'Build a store end to end',
+		body: 'The e-commerce tutorial, from schema to payments.',
+		href: '/docs/tutorials/build-an-ecommerce'
+	},
+	{
+		title: 'Coming from Express',
+		body: 'Map routes, middleware and ORM calls onto IntelliBiz.',
+		href: '/docs/tutorials/migrate-from-express'
+	}
 ];
 
-export default function DocsPage() {
-  return (
-    <>
-      <Breadcrumbs items={[{ label: "Docs" }]} />
+export default function DocsHome() {
+	const groups = getFullNav().filter(g => g.title !== 'Start here');
+	return (
+		<div className='max-w-none'>
+			<h1 className='text-4xl font-bold tracking-tight'>Documentation</h1>
+			<p className='mt-3 max-w-measure text-lg text-muted-foreground'>
+				IntelliBiz is a backend engine for software that handles money.
+				These pages cover installing it, the ideas behind it, every
+				package&apos;s API, and how to run it in production.
+			</p>
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Documentation
-        </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          Everything you need to build with IntelliBiz — from installation to
-          production deployment.
-        </p>
-      </div>
+			<h2 className='mt-10 text-xl font-semibold'>
+				Pick a starting point
+			</h2>
+			<ul
+				className='mt-3 max-w-3xl divide-y divide-border border-y border-border'
+				style={{ listStyle: 'none', paddingLeft: 0 }}
+			>
+				{ENTRY_POINTS.map(e => (
+					<li key={e.href} style={{ marginTop: 0, paddingLeft: 0 }}>
+						<Link
+							href={e.href}
+							className='flex flex-col gap-0.5 px-1 py-3 hover:bg-muted sm:flex-row sm:items-baseline sm:gap-6'
+						>
+							<span className='w-64 shrink-0 font-medium'>
+								{e.title}
+							</span>
+							<span className='text-sm text-muted-foreground'>
+								{e.body}
+							</span>
+						</Link>
+					</li>
+				))}
+			</ul>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {QUICK_LINKS.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="group rounded-xl border border-border bg-background p-6 hover:border-brand-500/50 hover:shadow-lg transition-all"
-          >
-            <div className="mb-3 inline-flex rounded-lg bg-brand-500/10 p-2">
-              <link.icon className="h-5 w-5 text-brand-600 dark:text-brand-400" />
-            </div>
-            <h3 className="font-semibold group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-              {link.title}
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {link.description}
-            </p>
-            <div className="mt-3 flex items-center gap-1 text-sm font-medium text-brand-600 dark:text-brand-400">
-              Learn more
-              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      <Pagination
-        prev={null}
-        next={{ title: "Installation", href: "/docs/installation" }}
-      />
-    </>
-  );
+			<h2 className='mt-12 text-xl font-semibold'>
+				Everything in the docs
+			</h2>
+			<div className='mt-4 grid gap-x-10 gap-y-8 md:grid-cols-2 2xl:grid-cols-3'>
+				{groups.map(g => (
+					<section key={g.title}>
+						<h3 className='font-semibold'>{g.title}</h3>
+						<ul
+							className='mt-2 space-y-1 text-sm'
+							style={{ listStyle: 'none', paddingLeft: 0 }}
+						>
+							{g.items.map(i => (
+								<li
+									key={i.href}
+									style={{ marginTop: 0, paddingLeft: 0 }}
+								>
+									<Link
+										href={i.href}
+										className='text-muted-foreground hover:text-foreground hover:underline'
+									>
+										{i.title}
+									</Link>
+								</li>
+							))}
+						</ul>
+					</section>
+				))}
+			</div>
+		</div>
+	);
 }

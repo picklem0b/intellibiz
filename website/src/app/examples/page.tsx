@@ -1,112 +1,149 @@
-import Link from "next/link";
-import { ExternalLink, Github, ArrowRight } from "lucide-react";
+import { SITE } from '@/lib/site';
 
-const EXAMPLES = [
-  {
-    title: "Flagship Store",
-    description:
-      "Full e-commerce application with product catalog, checkout, payments, and multi-tenancy.",
-    tags: ["e-commerce", "payments", "multi-tenant"],
-    href: "[GITHUB URL]/tree/main/examples/flagship-store",
-  },
-  {
-    title: "Hello World",
-    description:
-      "Minimal starter project with a single action and HTTP route.",
-    tags: ["starter", "minimal"],
-    href: "[GITHUB URL]/tree/main/examples/hello-world",
-  },
-  {
-    title: "Multi-Tenant SaaS",
-    description:
-      "Multi-tenant SaaS application with user management, subscriptions, and billing.",
-    tags: ["saas", "multi-tenant", "billing"],
-    href: "[GITHUB URL]/tree/main/examples/multi-tenant",
-  },
-  {
-    title: "Accounting Ledger",
-    description:
-      "Double-entry accounting system with WAL journal and SHA-256 audit trail.",
-    tags: ["accounting", "ledger", "audit"],
-    href: "[GITHUB URL]/tree/main/examples/accounting",
-  },
-  {
-    title: "CRM",
-    description:
-      "Customer relationship management with contacts, deals, and activity tracking.",
-    tags: ["crm", "contacts", "deals"],
-    href: "[GITHUB URL]/tree/main/examples/crm",
-  },
-  {
-    title: "Inventory Management",
-    description:
-      "SKU management with stock tracking, reservations, and warehouse operations.",
-    tags: ["inventory", "sku", "warehouse"],
-    href: "[GITHUB URL]/tree/main/examples/inventory",
-  },
-  {
-    title: "WebSocket Chat",
-    description:
-      "Real-time chat application with rooms, presence, and message history.",
-    tags: ["websocket", "realtime", "chat"],
-    href: "[GITHUB URL]/tree/main/examples/websocket-chat",
-  },
-  {
-    title: "AI Assistant",
-    description:
-      "AI-powered assistant with OpenAI integration, streaming responses, and conversation history.",
-    tags: ["ai", "openai", "streaming"],
-    href: "[GITHUB URL]/tree/main/examples/ai-assistant",
-  },
+export const metadata = { title: 'Examples' };
+
+type Status = 'Working' | 'Stub';
+
+/** Status reflects what is in /examples today, not what is planned. */
+const EXAMPLES: {
+	name: string;
+	dir: string;
+	status: Status;
+	body: string;
+	uses: string;
+}[] = [
+	{
+		name: 'Hello world',
+		dir: 'hello-world',
+		status: 'Working',
+		body: 'A root route and an authenticated /me route.',
+		uses: 'http, identity'
+	},
+	{
+		name: 'Flagship store',
+		dir: 'flagship-store',
+		status: 'Working',
+		body: 'Checkout endpoint that validates a cart, takes payment and journals the order.',
+		uses: 'http, commerce, finance'
+	},
+	{
+		name: 'Ecommerce subscriptions',
+		dir: 'ecommerce',
+		status: 'Working',
+		body: 'A subscribe action with starter, pro and enterprise plans on monthly or annual billing.',
+		uses: 'http, commerce'
+	},
+	{
+		name: 'Multi-tenant orders',
+		dir: 'multi-tenant',
+		status: 'Working',
+		body: "Orders endpoint scoped by the x-tenant-id header, so one store never sees another's rows.",
+		uses: 'http, identity, db'
+	},
+	{
+		name: 'Accounting',
+		dir: 'accounting',
+		status: 'Working',
+		body: 'A balance endpoint built on money values. Ledger reads are marked as production-only in the source.',
+		uses: 'http, finance, identity'
+	},
+	{
+		name: 'CRM',
+		dir: 'crm',
+		status: 'Stub',
+		body: 'Placeholder that serves a health response. Contacts and deals are not built yet.',
+		uses: 'http'
+	},
+	{
+		name: 'Inventory',
+		dir: 'inventory',
+		status: 'Stub',
+		body: 'Placeholder that serves a health response.',
+		uses: 'http'
+	},
+	{
+		name: 'WebSocket chat',
+		dir: 'websocket-chat',
+		status: 'Stub',
+		body: 'Placeholder that serves a health response.',
+		uses: 'http'
+	},
+	{
+		name: 'AI assistant',
+		dir: 'ai-assistant',
+		status: 'Stub',
+		body: 'Placeholder that serves a health response. The OpenAI and Anthropic plugins exist separately.',
+		uses: 'http'
+	}
 ];
 
 export default function ExamplesPage() {
-  return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mx-auto max-w-2xl text-center mb-12">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Examples & Showcase
-        </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          Real-world applications built with IntelliBiz. Clone, study, and
-          learn.
-        </p>
-      </div>
+	return (
+		<div className='mx-auto max-w-5xl px-4 py-14 sm:px-6'>
+			<h1 className='text-4xl font-bold tracking-tight'>Examples</h1>
+			<p className='mt-3 max-w-measure text-lg text-muted-foreground'>
+				Nine projects live in the{' '}
+				<code className='font-mono text-base'>examples/</code> folder.
+				Five do real work. The other four are scaffolds that only answer
+				a health check, and they are marked so you don&apos;t clone one
+				expecting an app.
+			</p>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
-        {EXAMPLES.map((example) => (
-          <div
-            key={example.title}
-            className="group rounded-xl border border-border bg-background p-6 hover:border-brand-500/50 hover:shadow-lg transition-all"
-          >
-            <h3 className="text-lg font-semibold">{example.title}</h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              {example.description}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {example.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-            <div className="mt-4">
-              <a
-                href={example.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline"
-              >
-                View Example
-                <ArrowRight className="h-3.5 w-3.5" />
-              </a>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+			<div className='mt-10 overflow-x-auto rounded border border-border'>
+				<table className='w-full min-w-[40rem] border-collapse text-sm'>
+					<thead>
+						<tr className='border-b border-border bg-muted text-left'>
+							<th className='px-4 py-2.5 font-semibold'>
+								Example
+							</th>
+							<th className='px-4 py-2.5 font-semibold'>
+								What it does
+							</th>
+							<th className='px-4 py-2.5 font-semibold'>Uses</th>
+							<th className='px-4 py-2.5 font-semibold'>
+								Status
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{EXAMPLES.map((e, i) => (
+							<tr
+								key={e.dir}
+								className={i % 2 ? 'bg-bar/60' : ''}
+							>
+								<td className='px-4 py-3 align-top'>
+									<a
+										className='font-medium underline decoration-border underline-offset-4 hover:decoration-foreground'
+										href={`${SITE.github}/tree/main/examples/${e.dir}`}
+									>
+										{e.name}
+									</a>
+									<div className='font-mono text-xs text-muted-foreground'>
+										examples/{e.dir}
+									</div>
+								</td>
+								<td className='px-4 py-3 align-top text-muted-foreground'>
+									{e.body}
+								</td>
+								<td className='px-4 py-3 align-top font-mono text-xs'>
+									{e.uses}
+								</td>
+								<td className='px-4 py-3 align-top'>
+									<span
+										className={
+											e.status === 'Working'
+												? 'font-semibold text-brand-700 dark:text-brand-400'
+												: 'text-caution'
+										}
+									>
+										{e.status}
+									</span>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	);
 }

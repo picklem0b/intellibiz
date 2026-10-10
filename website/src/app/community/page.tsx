@@ -1,84 +1,58 @@
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { Github, MessageCircle, BookOpen, Heart } from "lucide-react";
+import Link from 'next/link';
+import { SITE } from '@/lib/site';
 
-const COMMUNITY_LINKS = [
-  {
-    icon: Github,
-    title: "GitHub",
-    description:
-      "Browse the source code, report issues, and contribute to IntelliBiz.",
-    href: "[GITHUB URL]",
-    label: "View on GitHub",
-  },
-  {
-    icon: MessageCircle,
-    title: "Discord",
-    description:
-      "Join our Discord community to chat with other developers, ask questions, and share your projects.",
-    href: "[DISCORD/COMMUNITY URL]",
-    label: "Join Discord",
-  },
-  {
-    icon: BookOpen,
-    title: "Documentation",
-    description:
-      "Explore the complete documentation for guides, API references, and tutorials.",
-    href: "/docs",
-    label: "Read Docs",
-  },
-];
+export const metadata = { title: 'Community' };
 
 export default function CommunityPage() {
-  return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-      <Breadcrumbs items={[{ label: "Community" }]} />
+	return (
+		<div className='doc mx-auto max-w-3xl px-4 py-14 sm:px-6'>
+			<h1 className='text-4xl font-bold tracking-tight'>Community</h1>
+			<p className='mt-3 text-lg text-muted-foreground'>
+				Where to ask questions, report problems and send changes.
+			</p>
 
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-        Community
-      </h1>
-      <p className="mt-4 text-lg text-muted-foreground">
-        Join the IntelliBiz community. Get help, share ideas, and connect with
-        other developers.
-      </p>
+			<h2>Report a bug or propose a feature</h2>
+			<p>
+				Open an issue on <a href={`${SITE.github}/issues`}>GitHub</a>.
+				There are templates for bug reports, feature requests and RFC
+				proposals. Larger design changes go through the{' '}
+				<Link href='/docs/rfc'>RFC process</Link>.
+			</p>
 
-      <div className="mt-10 grid gap-6 sm:grid-cols-3">
-        {COMMUNITY_LINKS.map((link) => (
-          <a
-            key={link.title}
-            href={link.href}
-            target={link.href.startsWith("http") ? "_blank" : undefined}
-            rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-            className="group rounded-xl border border-border bg-background p-6 hover:border-brand-500/50 hover:shadow-lg transition-all text-center"
-          >
-            <div className="mx-auto mb-4 inline-flex rounded-lg bg-brand-500/10 p-3">
-              <link.icon className="h-6 w-6 text-brand-600 dark:text-brand-400" />
-            </div>
-            <h3 className="font-semibold">{link.title}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {link.description}
-            </p>
-          </a>
-        ))}
-      </div>
+			<h2>Contribute</h2>
+			<p>
+				Start with the{' '}
+				<Link href='/docs/contributing'>contributing guide</Link>, then
+				set up your machine with{' '}
+				<Link href='/docs/contributing/development-setup'>
+					development setup
+				</Link>
+				. Rust work has its own notes in{' '}
+				<Link href='/docs/contributing/rust-development'>
+					Rust development
+				</Link>
+				.
+			</p>
 
-      <div className="mt-16 rounded-xl border border-border bg-muted/30 p-8 text-center">
-        <Heart className="mx-auto h-8 w-8 text-red-500" />
-        <h2 className="mt-4 text-2xl font-bold">Open Source</h2>
-        <p className="mt-2 text-muted-foreground max-w-lg mx-auto">
-          IntelliBiz is open-source software licensed under the Apache License
-          2.0. We welcome contributions of all kinds — from bug reports to new
-          features.
-        </p>
-        <a
-          href="[GITHUB URL]"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-500 transition-colors"
-        >
-          <Github className="h-4 w-4" />
-          Star on GitHub
-        </a>
-      </div>
-    </div>
-  );
+			<h2>Report a security issue</h2>
+			<p>
+				Please don&apos;t file it publicly. Follow the{' '}
+				<Link href='/docs/security/responsible-disclosure'>
+					responsible disclosure
+				</Link>{' '}
+				process.
+			</p>
+
+			<h2>Conduct</h2>
+			<p>
+				Everyone taking part is held to the{' '}
+				<Link href='/docs/code-of-conduct'>code of conduct</Link>.
+			</p>
+			{SITE.community && (
+				<p>
+					Chat lives <a href={SITE.community}>here</a>.
+				</p>
+			)}
+		</div>
+	);
 }

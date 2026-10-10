@@ -1,22 +1,20 @@
-import { Sidebar } from "@/components/sidebar";
-import { VersionSelector } from "@/components/version-selector";
+import { Sidebar } from '@/components/sidebar';
+import { Toc } from '@/components/toc';
+import { getFullNav } from '@/lib/nav';
 
 export default function DocsLayout({
-  children,
+	children
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  return (
-    <div className="mx-auto flex min-h-screen max-w-7xl">
-      <Sidebar />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-end px-6 py-3 border-b border-border">
-          <VersionSelector />
-        </div>
-        <article className="px-6 py-10 lg:px-12 max-w-4xl">
-          {children}
-        </article>
-      </div>
-    </div>
-  );
+	const groups = getFullNav();
+	return (
+		<div className='mx-auto flex max-w-[88rem]'>
+			<Sidebar groups={groups} />
+			<div className='min-w-0 flex-1 px-4 py-10 sm:px-8 lg:px-10'>
+				<article className='doc'>{children}</article>
+			</div>
+			<Toc />
+		</div>
+	);
 }

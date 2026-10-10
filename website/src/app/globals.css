@@ -1,86 +1,265 @@
-/* `@import` must precede every other rule, including the Tailwind
-   directives, or the stylesheet is invalid CSS. */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71% 4%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 243 75% 59%;
-    --radius: 0.5rem;
-  }
+	:root {
+		--background: 245 247 243; /* ledger paper */
+		--foreground: 24 36 30; /* ink */
+		--muted: 233 238 230;
+		--muted-foreground: 84 99 91;
+		--border: 208 217 205;
+		--ring: 30 107 82;
+		--bar: 227 237 224; /* green-bar stripe */
+		--debit: 168 58 42;
+		--caution: 150 100 20;
+		--accent-ink: 30 107 82;
+		color-scheme: light;
+	}
 
-  .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 20% 98%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 218 11% 65%;
-    --border: 223 47% 16%;
-    --input: 223 47% 16%;
-    --ring: 243 75% 59%;
-  }
+	.dark {
+		--background: 15 27 23;
+		--foreground: 228 236 229;
+		--muted: 24 40 34;
+		--muted-foreground: 148 166 156;
+		--border: 42 62 54;
+		--ring: 111 199 163;
+		--bar: 21 36 31;
+		--debit: 236 128 110;
+		--caution: 222 176 90;
+		--accent-ink: 111 199 163;
+		color-scheme: dark;
+	}
+
+	* {
+		@apply border-border;
+	}
+
+	html {
+		scroll-behavior: smooth;
+		scroll-padding-top: 5rem;
+	}
+
+	body {
+		@apply bg-background text-foreground font-sans;
+		font-feature-settings:
+			'ss01' 1,
+			'calt' 1;
+		text-rendering: optimizeLegibility;
+	}
+
+	::selection {
+		background: rgb(var(--accent-ink) / 0.22);
+	}
+
+	:focus-visible {
+		outline: 2px solid rgb(var(--ring));
+		outline-offset: 2px;
+		border-radius: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.001ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.001ms !important;
+		}
+	}
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
+/* ------------------------------------------------------------------ */
+/* Reading surface. :where() keeps specificity at zero so any utility  */
+/* class on a hand-written page still wins over these defaults.        */
+/* ------------------------------------------------------------------ */
+@layer components {
+	.doc {
+		font-size: 1rem;
+		line-height: 1.7;
+		max-width: 46rem;
+	}
+
+	:where(.doc) h1 {
+		font-size: 2.25rem;
+		line-height: 1.15;
+		font-weight: 700;
+		letter-spacing: -0.025em;
+	}
+	:where(.doc) h2 {
+		margin-top: 3rem;
+		padding-top: 1.25rem;
+		border-top: 1px solid rgb(var(--border));
+		font-size: 1.5rem;
+		line-height: 1.25;
+		font-weight: 650;
+		letter-spacing: -0.018em;
+	}
+	:where(.doc) h3 {
+		margin-top: 2rem;
+		font-size: 1.1875rem;
+		line-height: 1.35;
+		font-weight: 650;
+		letter-spacing: -0.01em;
+	}
+	:where(.doc) h4 {
+		margin-top: 1.5rem;
+		font-weight: 650;
+	}
+	:where(.doc) :is(h2, h3, h4) {
+		scroll-margin-top: 5rem;
+	}
+	:where(.doc) p,
+	:where(.doc) ul,
+	:where(.doc) ol,
+	:where(.doc) blockquote,
+	:where(.doc) .code-frame,
+	:where(.doc) .doc-table-wrap {
+		margin-top: 1rem;
+	}
+	:where(.doc) ul {
+		list-style: disc;
+		padding-left: 1.4rem;
+	}
+	:where(.doc) ol {
+		list-style: decimal;
+		padding-left: 1.5rem;
+	}
+	:where(.doc) li {
+		margin-top: 0.35rem;
+		padding-left: 0.2rem;
+	}
+	:where(.doc) li::marker {
+		color: rgb(var(--muted-foreground));
+	}
+	:where(.doc) a:not([class]) {
+		color: rgb(var(--accent-ink));
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
+	}
+	:where(.doc) a:not([class]):hover {
+		text-decoration-thickness: 2px;
+	}
+	:where(.doc) strong {
+		font-weight: 650;
+	}
+	.doc hr {
+		display: none; /* h2 already draws the section rule */
+	}
+	:where(.doc) blockquote {
+		border-left: 3px solid rgb(var(--accent-ink) / 0.5);
+		padding-left: 1rem;
+		color: rgb(var(--muted-foreground));
+	}
+	:where(.doc) :not(pre) > code {
+		font-family: theme('fontFamily.mono');
+		font-size: 0.84em;
+		padding: 0.12em 0.38em;
+		border-radius: 3px;
+		background: rgb(var(--muted));
+		border: 1px solid rgb(var(--border));
+	}
+
+	/* Markdown-rendered code */
+	.md-body pre.shiki {
+		margin-top: 1rem;
+		padding: 1rem 1.1rem;
+		overflow-x: auto;
+		font-family: theme('fontFamily.mono');
+		font-size: 0.8125rem;
+		line-height: 1.65;
+		border: 1px solid rgb(var(--border));
+		border-radius: 4px;
+		background: rgb(var(--muted)) !important;
+		tab-size: 2;
+	}
+	.md-body pre.shiki code {
+		font-size: inherit;
+		background: none;
+		border: 0;
+		padding: 0;
+	}
+	.shiki,
+	.shiki span {
+		color: var(--shiki-light);
+	}
+	.dark .shiki,
+	.dark .shiki span {
+		color: var(--shiki-dark);
+	}
+
+	/* Tables scroll inside their own box */
+	.doc table.doc-table {
+		display: block;
+		max-width: 100%;
+		overflow-x: auto;
+		margin-top: 1.25rem;
+		border-collapse: collapse;
+		font-size: 0.875rem;
+		line-height: 1.5;
+		border: 1px solid rgb(var(--border));
+		border-radius: 4px;
+	}
+	.doc table.doc-table th {
+		text-align: left;
+		font-weight: 650;
+		padding: 0.6rem 0.85rem;
+		background: rgb(var(--muted));
+		border-bottom: 1px solid rgb(var(--border));
+		white-space: nowrap;
+	}
+	.doc table.doc-table td {
+		padding: 0.55rem 0.85rem;
+		vertical-align: top;
+		border-bottom: 1px solid rgb(var(--border));
+	}
+	.doc table.doc-table tr:last-child td {
+		border-bottom: 0;
+	}
+	.doc table.doc-table tbody tr:nth-child(even) td {
+		background: rgb(var(--bar) / 0.55);
+	}
+
+	/* Ledger ruling: used behind the hero journal and in table-like lists */
+	.green-bar {
+		background-image: repeating-linear-gradient(
+			to bottom,
+			transparent 0,
+			transparent 2.5rem,
+			rgb(var(--bar)) 2.5rem,
+			rgb(var(--bar)) 5rem
+		);
+	}
+
+	.tabular {
+		font-variant-numeric: tabular-nums;
+	}
 }
 
-/* Code block styling */
-pre {
-  @apply rounded-lg border border-border bg-muted p-4 overflow-x-auto;
-}
-
-code {
-  @apply font-mono text-sm;
-}
-
-:not(pre) > code {
-  @apply rounded bg-muted px-1.5 py-0.5 text-sm font-medium;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+	width: 8px;
+	height: 8px;
 }
-
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
 ::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-border;
+	background: rgb(var(--border));
+	border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+/* Line numbers for CodeBlock: counted by CSS so copy-paste stays clean */
+.numbered code {
+	counter-reset: line;
 }
-
-/* Selection */
-::selection {
-  @apply bg-brand-500/20 text-foreground;
-}
-
-/* Focus visible */
-:focus-visible {
-  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+.numbered .line::before {
+	counter-increment: line;
+	content: counter(line);
+	display: inline-block;
+	width: 2rem;
+	margin-right: 1rem;
+	text-align: right;
+	color: rgb(var(--muted-foreground) / 0.6);
+	user-select: none;
 }
