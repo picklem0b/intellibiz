@@ -7,15 +7,57 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.18.2] — 2026-10-10
+
+First npm-publishable release. The published surface now matches what the docs
+and website describe.
+
+### Added
+
+- `@intellibiz/core` — `log`, `emit` and `db` context services on every request,
+action and event context, plus `buildBaseContext`, `buildJobContext`,
+`buildTaskContext` and `buildSocketContext`.
+- `@intellibiz/commerce` — real HMAC webhook signature verification for the
+Stripe, PayFast and Ozow providers, with constant-time comparison and timestamp
+tolerance.
+- `@intellibiz/http` — direct action mounting: `http.post(path, defineAction(...))`
+with the input schema laid out in the router.
+- `intellibiz` — the metapackage now bundles all eight packages, and
+`intellibiz/testing` re-exports `@intellibiz/testing`.
+- Twelve runnable examples (`examples/*`) — including `webhooks`, `events` and
+`scheduled-tasks` — each exercised in CI by `pnpm test:examples`.
+- `@intellibiz/cli` — `generate`, `config` and `migrate` commands; the executable
+moved to `bin.ts` so importing the command tree no longer runs the CLI.
+
+### Changed
+
+- TypeScript pinned to 5.9; every package builds with `tsdown` (ESM + CJS +
+declarations).
+- All published packages set to `1.18.2` with `license`, `repository`, `author`
+and `publishConfig.access` metadata. The `internal/*`, `plugins/*` and `tools/*`
+packages remain private stubs.
+- The website is now a workspace member and builds in the root pipeline.
+
+### Fixed
+
+- Event-bus listener failures respect the retry budget and dead-letter queue.
+- Tenant resolution falls back to the request URL host when no `Host` header is
+present, and no longer treats bare hosts or IPv4 addresses as tenants.
+- CLI scaffold emits the correct `action.data` accessor and sanitises file names.
+- Website theme tokens mapped in Tailwind; `metadataBase` set.
+
+### Removed
+
+- The duplicate `defineConfig` and the unused db/finance modules.
+
+---
+
 ## [Unreleased]
 
 ### In Progress
 
-- `@intellibiz/core` — Kernel, ALS context, NAPI-RS bridge
-- `@intellibiz/db` — Pure SQL engine, tenancy injection, Kysely integration
-- `@intellibiz/finance` — Fixed-point Money class, tax engine, currency registry
-- `@intellibiz/commerce` — Atomic transactions, WAL journaling, payment adapters
-- `@intellibiz/identity` — JWT verification, tenant resolution, RBAC
+- Database-enforced tenancy (Postgres RLS) and an append-only ledger with
+in-database double-entry constraints.
 
 ---
 
@@ -107,10 +149,11 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-[Unreleased]: https://github.com/chapter2/intellibiz/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/chapter2/intellibiz/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/chapter2/intellibiz/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/chapter2/intellibiz/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/chapter2/intellibiz/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/chapter2/intellibiz/compare/v1.0.0...v0.2.0
-[1.0.0]: https://github.com/chapter2/intellibiz/releases/tag/v1.0.0
+[Unreleased]: https://github.com/picklem0b/intellibiz/compare/v1.18.2...HEAD
+[1.18.2]: https://github.com/picklem0b/intellibiz/releases/tag/v1.18.2
+[0.6.0]: https://github.com/picklem0b/intellibiz/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/picklem0b/intellibiz/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/picklem0b/intellibiz/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/picklem0b/intellibiz/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/picklem0b/intellibiz/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/picklem0b/intellibiz/releases/tag/v0.1.0
