@@ -842,16 +842,19 @@ PRs always target `dev`. Only release commits merge to `main`.
 
 ### 12.3 Versioning
 
-Tags follow `MAJOR.MINOR.PATCH`:
+Tags follow `v1.<category>.<stage>`:
 
-- `PATCH` — bug fix or correction to existing code or docs
-- `MINOR` — new capability, new file, new feature, additive change
-- `MAJOR` — breaking API change
+- `category` — the kind of change, one integer per category: `13` fix,
+  `14` feat, `15` refactor, `16` build, `17` test, `18` docs, and onward.
+- `stage` — the Nth distinct change within that category, from `1`.
+
+The result is semver-shaped, so the same string is used as the published npm
+version. All packages share one version.
 
 ```
 git add -A
 git commit -m "(type): summary"
-git tag vMAJOR.MINOR.PATCH -m "short paragraph summary of what changed"
+git tag v1.16.1 -m "short summary of what changed"
 git push origin dev --follow-tags
 ```
 

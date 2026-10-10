@@ -32,23 +32,25 @@ These are non-negotiable. No code path may violate them:
 
 | Role               | Choice                                         | Version                        |
 | ------------------ | ---------------------------------------------- | ------------------------------ |
-| Business Logic     | TypeScript                                     | `^7.0.2`                       |
-| Performance Engine | Rust via NAPI-RS                               | napi `^2.16`                   |
-| Runtime            | Node.js (primary), Bun (supported)             | Node 18+                       |
-| Package Manager    | pnpm workspaces                                | `9+`                           |
-| Build              | tsup + Turborepo                               | tsup `^8.5.1`, turbo `^2.10.8` |
+| Business Logic     | TypeScript                                     | `^5.9.3`                       |
+| Performance Engine | Rust via NAPI-RS (planned; TS fallback ships)  | napi `^2.16`                   |
+| Runtime            | Node.js (primary), Bun (supported)             | Node 22+                       |
+| Package Manager    | pnpm workspaces                                | `10+`                          |
+| Build              | tsdown + Turborepo                             | tsdown `^0.22.14`, turbo `^2.10.8` |
 | Validation         | Zod                                            | `^4.4.3`                       |
-| Formatter          | Prettier                                       | `^3.9.6`                       |
-| Database           | Kysely + `sql` tagged templates                | `^0.29.4`                      |
-| HTTP               | Hono (internal, wrapped by `@intellibiz/http`) | `^4.12.34`                     |
-| Decimal Math (TS)  | Decimal.js (TS-side safety)                    | `^10.6.0`                      |
-| Rust Math          | `rust_decimal` 128-bit                         | `1.35.0`                       |
+| Formatter          | Prettier                                       | `^3.5.3`                       |
+| Database           | Kysely + `sql` tagged templates                | `^0.28.11`                     |
+| HTTP               | Hono (internal, wrapped by `@intellibiz/http`) | `^4.13.1`                      |
+| Decimal Math (TS)  | Decimal.js (the arithmetic source of truth)    | `^10.5.0`                      |
+| Rust Math          | `rust_decimal` 128-bit (planned)               | `1.35.0`                       |
 | Logging            | Pino (auto-injects traceId/tenantId/userId)    | `^10.3.1`                      |
-| CLI UI             | `@clack/prompts`                               | `^1.7.0`                       |
-| CLI Logic          | `cac`                                          | `^7.0.0`                       |
-| Security           | `jose` (JWT/crypto)                            | `^6.2.8`                       |
-| Dates              | `dayjs`                                        | `^1.11.21`                     |
-| Scaffolding        | `fs-extra`                                     | `^11.4.0`                      |
+| CLI UI             | `consola`                                      | `^3.4.2`                       |
+| CLI Logic          | `citty`                                        | `^0.1.6`                       |
+| Security           | `jose` (JWT/crypto)                            | `^6.2.3`                       |
+
+> Feature status: everything listed above ships and is covered by tests. The
+> Rust crates are scaffolded but not yet wired into the build — money arithmetic
+> currently runs in TypeScript on Decimal.js. See the roadmap for planned work.
 
 **Turbo v2 note:** `turbo.json` uses `tasks`, not `pipeline`.
 
@@ -472,7 +474,7 @@ intellibiz/
 ```
 git add -A
 git commit -m "(type): detailed summary of every meaningful change made"
-git tag vMAJOR.MINOR.PATCH -m "one short sentence describing what this version is"
+git tag v1.<category>.<stage> -m "one short sentence describing what this version is"
 gpod --follow-tags
 ```
 
@@ -485,11 +487,17 @@ gpod --follow-tags
 
 **Commit types:** `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `build`
 
-**Version rules:**
+**Version rules — `v1.<category>.<stage>`:**
 
-- `PATCH` — bug fix, typo, correction to existing content
-- `MINOR` — new file, new feature, additive change
-- `MAJOR` — breaking API change, monorepo restructure, rename of public packages
+- `category` is a number that identifies the *kind* of change. Each new
+  category takes the next integer: `13` fix, `14` feat, `15` refactor,
+  `16` build, `17` test, `18` docs, and so on.
+- `stage` is the Nth distinct change within that category, starting at `1`.
+- Fixed three things in one round under the fix category (`13`)? They become
+  `v1.13.1`, `v1.13.2`, `v1.13.3`. A later feature round starts a new category
+  at `v1.14.1`.
+- The tag is also the published npm version. It is semver-shaped
+  (`major.minor.patch`), so `1.13.1` is a valid version that npm accepts.
 
 **Branches:** `main` (stable) | `dev` (active) | `feat/*` | `fix/*` | `v1.x` (LTS)
 
@@ -497,8 +505,10 @@ gpod --follow-tags
 
 ```
 git add -A
-git commit -m "(docs): update all API docs — core, db, finance, commerce, identity, legal, governance, inventory, http, cli, testing, add api/index.md"
-git tag v0.6.0 -m "complete API reference rewrite"
+git commit -m "(fix): resolve tenant host fallback, event retry budget and website theme tokens"
+git tag v1.13.1 -m "fix: tenant host fallback"
+git tag v1.13.2 -m "fix: event retry budget"
+git tag v1.13.3 -m "fix: website theme tokens"
 gpod --follow-tags
 ```
 

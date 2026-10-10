@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2025
-**Deciders:** chapter2
+**Deciders:** Lethabo Khedama (@picklem0b)
 
 ---
 

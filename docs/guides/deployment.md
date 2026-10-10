@@ -6,7 +6,7 @@ This guide covers single-node and multi-node deployment configurations.
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 22+
 - PostgreSQL 14+ (or MySQL 8+)
 - pnpm 9+ (build only)
 

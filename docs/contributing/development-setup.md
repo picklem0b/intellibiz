@@ -18,7 +18,7 @@ This guide covers how to run the Intellibiz monorepo locally for core developmen
 ## 1. Clone and Install
 
 ```bash
-git clone https://github.com/chapter2/intellibiz.git
+git clone https://github.com/picklem0b/intellibiz.git
 cd intellibiz
 pnpm install
 ```

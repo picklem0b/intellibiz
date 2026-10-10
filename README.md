@@ -7,7 +7,7 @@
 _A unified, fiscally-aware backend engine powered by TypeScript & Native Rust._
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Rust](https://img.shields.io/badge/Rust-1.75+-orange?logo=rust)](https://www.rust-lang.org/)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -234,11 +234,13 @@ All core packages are maintained in a unified `pnpm` monorepo:
 
 ## 🛠 LOCAL DEVELOPMENT & COMPILATION
 
-Intellibiz requires **Node.js 18+**, **pnpm 9+**, and the **Rust Toolchain**.
+Intellibiz requires **Node.js 22+** and **pnpm 10+**. The Rust toolchain is only
+needed for the optional native crates; the TypeScript packages build and run
+without it.
 
 ```bash
 # 1. Clone & Install Dependencies
-git clone https://github.com/your-username/intellibiz.git
+git clone https://github.com/picklem0b/intellibiz.git
 cd intellibiz
 pnpm install
 
