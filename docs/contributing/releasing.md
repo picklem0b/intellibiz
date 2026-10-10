@@ -17,7 +17,8 @@ scoped packages and a metapackage.
 | `@intellibiz/http` | scoped | ✅ |
 | `@intellibiz/testing` | scoped | ✅ |
 | `@intellibiz/cli` | scoped | ✅ |
-| `internal/*`, `plugins/*`, `tools/*` | scoped stubs | ❌ (`private: true`) |
+| `@intellibiz/create-intellibiz` | scoped | ✅ |
+| `internal/*`, `plugins/*`, `tools/sdk` | scoped stubs | ❌ (`private: true`) |
 
 Every published package carries the same version and the same metadata:
 `license`, `author`, `repository` (with a `directory` so the npm page links to
@@ -33,8 +34,9 @@ npm install intellibiz
 # Just one capability, no metapackage.
 npm install @intellibiz/finance
 
-# The scaffolder (once published) or the CLI directly.
-npm create intellibiz@latest
+# The scaffolder, then the CLI it generates a project for.
+npm create @intellibiz/intellibiz@latest my-app
+npx intellibiz init my-app
 npx intellibiz dev
 ```
 
@@ -68,8 +70,8 @@ protocol never reaches consumers. This is why publishing must go through
 3. Bump `version` in every published `package.json` (they move together).
 4. Commit, then tag: `git tag v1.18.2 && git push origin v1.18.2`.
 5. The `Release` workflow verifies the tag, then runs
-   `pnpm -r --filter './packages/*' publish --access public --provenance`.
-   Private stubs are skipped automatically.
+   `pnpm -r publish --access public --provenance`. Private packages are
+   skipped automatically.
 
 Publishing requires an `NPM_TOKEN` repository secret with publish rights to the
 `@intellibiz` scope. Provenance requires the `id-token: write` permission that
@@ -79,11 +81,25 @@ the workflow already requests.
 
 ```bash
 pnpm build
-pnpm -r --filter './packages/*' publish --access public --no-git-checks --dry-run
+pnpm publish:dry   # pnpm -r publish --access public --no-git-checks --dry-run
 ```
 
 The dry run lists exactly what would be uploaded from each package's `files`
 (always `dist/`), without touching the registry.
+
+## Retired names
+
+`@intellibiz/intellibiz@1.0.0` was published before the metapackage settled on
+the unscoped `intellibiz` name. It is superseded and should be deprecated once,
+so installers are pointed at the current package:
+
+```bash
+npm deprecate '@intellibiz/intellibiz' \
+  "Renamed to intellibiz. Install with: npm install intellibiz"
+```
+
+Deprecation only adds a warning to the old package; it does not delete it and
+never breaks existing installs.
 
 ## Versioning
 

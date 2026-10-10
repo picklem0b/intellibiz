@@ -26,8 +26,11 @@ with the input schema laid out in the router.
 `intellibiz/testing` re-exports `@intellibiz/testing`.
 - Twelve runnable examples (`examples/*`) — including `webhooks`, `events` and
 `scheduled-tasks` — each exercised in CI by `pnpm test:examples`.
-- `@intellibiz/cli` — `generate`, `config` and `migrate` commands; the executable
-moved to `bin.ts` so importing the command tree no longer runs the CLI.
+- `@intellibiz/cli` — `init`, `generate`, `config` and `migrate` commands; the
+executable moved to `bin.ts` so importing the command tree no longer runs the CLI.
+- `@intellibiz/create-intellibiz` — a working scaffolder
+(`npm create @intellibiz/intellibiz`) that emits a runnable project from the
+same templates as `intellibiz init`.
 
 ### Changed
 

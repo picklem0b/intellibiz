@@ -1,6 +1,6 @@
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Pagination } from '@/components/pagination';
-import { CodeBlock, Callout } from '@/components/code-block';
+import { CodeBlock } from '@/components/code-block';
 
 export default function CliPage() {
 	return (
@@ -14,8 +14,10 @@ export default function CliPage() {
 
 			<h1 className='text-3xl font-bold tracking-tight'>CLI Commands</h1>
 			<p className='mt-4 text-lg text-muted-foreground'>
-				IntelliBiz ships with a CLI for development, building, auditing,
-				and scaffolding.
+				IntelliBiz ships with a CLI for scaffolding, development, building and
+				auditing. It is installed with the metapackage, so{' '}
+				<code>npx intellibiz</code> works in any project that depends on{' '}
+				<code>intellibiz</code>.
 			</p>
 
 			<h2 className='mt-10 text-2xl font-bold tracking-tight'>
@@ -25,6 +27,10 @@ export default function CliPage() {
 			<div className='mt-6 space-y-4'>
 				{[
 					{
+						cmd: 'npx intellibiz init [dir]',
+						desc: 'Scaffold a new project (same templates as npm create)'
+					},
+					{
 						cmd: 'npx intellibiz dev',
 						desc: 'Start the development server with hot reload'
 					},
@@ -33,28 +39,24 @@ export default function CliPage() {
 						desc: 'Build the project for production'
 					},
 					{
-						cmd: 'npx intellibiz start',
-						desc: 'Start the production server'
-					},
-					{
-						cmd: 'npx intellibiz doctor',
-						desc: 'Check project configuration and dependencies'
-					},
-					{
 						cmd: 'npx intellibiz audit',
-						desc: 'Run governance audit on the codebase'
+						desc: 'Run a governance audit — pass --json for a machine-readable report'
 					},
 					{
 						cmd: 'npx intellibiz dashboard',
-						desc: 'Open the admin dashboard in the browser'
+						desc: 'Launch the local admin dashboard'
 					},
 					{
-						cmd: 'npx intellibiz generate <name>',
-						desc: 'Scaffold a new action, listener, or plugin'
+						cmd: 'npx intellibiz generate action|override|plugin',
+						desc: 'Scaffold a convention-compliant action, override or plugin'
 					},
 					{
-						cmd: 'npx intellibiz migrate',
-						desc: 'Run database migrations'
+						cmd: 'npx intellibiz config --validate',
+						desc: 'Validate intellibiz.config.ts against the core schema'
+					},
+					{
+						cmd: 'npx intellibiz migrate up|down|status|create',
+						desc: 'Database migration runner'
 					}
 				].map(({ cmd, desc }) => (
 					<div
@@ -72,19 +74,39 @@ export default function CliPage() {
 			</div>
 
 			<h2 className='mt-10 text-2xl font-bold tracking-tight'>
+				Create a project
+			</h2>
+			<p className='mt-2 text-muted-foreground'>
+				<code>init</code> writes a runnable project — a config, a typed action
+				and an HTTP entry point — into a new directory:
+			</p>
+
+			<CodeBlock
+				code={`# Either works and generates the same project
+npm create @intellibiz/intellibiz@latest my-shop
+npx intellibiz init my-shop
+
+cd my-shop
+pnpm install
+pnpm dev`}
+				language='bash'
+				filename='Terminal'
+			/>
+
+			<h2 className='mt-10 text-2xl font-bold tracking-tight'>
 				Development Mode
 			</h2>
 
 			<CodeBlock
-				code={`# Start development server with hot reload
+				code={`# Start the development server
 npx intellibiz dev
 
 # Output:
-# 🛸 IntelliBiz Engine active on http://localhost:3000
-# 🔥 Hot reload enabled
-# 📊 Dashboard at http://localhost:3000/_admin
-# ✅ Configuration validated
-# ✅ Native Rust module loaded`}
+# Starting Intellibiz dev server on port 3000...
+# Config validation running...
+# WAL Recovery Engine — scanning for PENDING entries...
+# Dev server ready at http://localhost:3000
+# Trace logging enabled. Watching for changes...`}
 				language='bash'
 				filename='Terminal'
 			/>
@@ -93,17 +115,18 @@ npx intellibiz dev
 				Generate
 			</h2>
 			<p className='mt-2 text-muted-foreground'>
-				Scaffold new files with the <code>generate</code> command:
+				Scaffold convention-compliant files with the <code>generate</code>{' '}
+				command:
 			</p>
 
 			<CodeBlock
 				code={`# Generate a new action
 npx intellibiz generate action process-refund
 
-# Generate a new event listener
-npx intellibiz generate listener order-placed
+# Generate a config override file
+npx intellibiz generate override black-friday
 
-# Generate a new plugin
+# Generate a new plugin package
 npx intellibiz generate plugin stripe-extended`}
 				language='bash'
 				filename='Terminal'
