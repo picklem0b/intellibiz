@@ -10,8 +10,7 @@ export function toCamelCase(name: string): string {
 	return name
 		.trim()
 		.replace(/[-_\s]+([a-zA-Z0-9])/g, (_, c: string) => c.toUpperCase())
-		.replace(/^[^a-zA-Z_$]+/, '')
-		.replace(/^([a-z])/, (m) => m);
+		.replace(/^[^a-zA-Z_$]+/, '');
 }
 
 /** `order-items` → `OrderItems` */
@@ -156,6 +155,197 @@ export function scaffoldPlugin(rawName: string): {
 	);
 
 	return { dir, name: `@intellibiz/${dir}`, source: source + '\n' };
+}
+
+// ─── Project scaffolding ──────────────────────────────────────────────────────
+
+/** Versions written into a freshly scaffolded project. */
+export const SCAFFOLD_VERSIONS = {
+	intellibiz: '^1.18.2',
+	zod: '^4.4.3',
+	hono: '^2.1.0',
+	tsx: '^4.0.0',
+	typescript: '^5.9.3',
+	vitest: '^4.1.10',
+	nodeTypes: '^22.0.0'
+} as const;
+
+export interface ScaffoldedProject {
+	/** Sanitised kebab-case directory name. */
+	dirName: string;
+	/** `name` field written into the generated package.json. */
+	projectName: string;
+	/** Relative path → file contents. */
+	files: Record<string, string>;
+}
+
+/**
+ * Generates a complete, runnable Intellibiz project as a map of path → contents.
+ *
+ * Pure by design: the same templates back both `npm create intellibiz` and
+ * `intellibiz init`, and the output can be asserted in tests without touching
+ * the filesystem.
+ */
+export function scaffoldProject(rawName: string): ScaffoldedProject {
+	const dirName = toKebabCase(rawName);
+	if (!dirName) {
+		throw new Error(
+			`Invalid project name "${rawName}": must contain at least one letter or digit.`
+		);
+	}
+	const projectName = dirName;
+
+	const pkg = {
+		name: projectName,
+		version: '0.1.0',
+		private: true,
+		type: 'module',
+		scripts: {
+			dev: 'tsx src/index.ts',
+			start: 'tsx src/index.ts',
+			typecheck: 'tsc --noEmit',
+			test: 'vitest run'
+		},
+		dependencies: {
+			'@hono/node-server': SCAFFOLD_VERSIONS.hono,
+			intellibiz: SCAFFOLD_VERSIONS.intellibiz,
+			zod: SCAFFOLD_VERSIONS.zod
+		},
+		devDependencies: {
+			'@intellibiz/testing': SCAFFOLD_VERSIONS.intellibiz,
+			'@types/node': SCAFFOLD_VERSIONS.nodeTypes,
+			tsx: SCAFFOLD_VERSIONS.tsx,
+			typescript: SCAFFOLD_VERSIONS.typescript,
+			vitest: SCAFFOLD_VERSIONS.vitest
+		}
+	};
+
+	const tsconfig = {
+		compilerOptions: {
+			target: 'ES2022',
+			module: 'NodeNext',
+			moduleResolution: 'NodeNext',
+			lib: ['ES2022'],
+			types: ['node'],
+			strict: true,
+			noEmit: true,
+			skipLibCheck: true,
+			esModuleInterop: true,
+			forceConsistentCasingInFileNames: true,
+			isolatedModules: true,
+			resolveJsonModule: true
+		},
+		include: ['src', 'intellibiz.config.ts']
+	};
+
+	const files: Record<string, string> = {
+		'package.json': JSON.stringify(pkg, null, '\t') + '\n',
+		'tsconfig.json': JSON.stringify(tsconfig, null, '\t') + '\n',
+		'intellibiz.config.ts': `import { defineConfig } from 'intellibiz/config';
+
+export default defineConfig({
+	modules: ['commerce', 'finance', 'identity', 'db'],
+	tenancy: {
+		strategy: 'column',
+		key: 'org_id',
+		type: 'uuid',
+		strict: true
+	},
+	auth: {
+		provider: 'internal',
+		jwtSecret: process.env['JWT_SECRET'] ?? 'dev-only-secret-change-me'
+	},
+	finance: {
+		baseCurrency: 'USD',
+		rounding: 'bankers'
+	},
+	environment: {
+		trace: true,
+		logLevel: 'info'
+	}
+});
+`,
+		'src/index.ts': `/**
+ * ${projectName} — HTTP entry point.
+ *
+ * Run it:  pnpm dev
+ *   curl localhost:3000/health
+ *   curl -X POST localhost:3000/greet -H 'content-type: application/json' \\
+ *        -d '{"name":"Ada","enthusiasm":3}'
+ */
+import { http } from 'intellibiz';
+import { greet } from './actions/greet.js';
+
+http.get('/', () => ({
+	service: '${projectName}',
+	routes: ['GET /health', 'POST /greet']
+}));
+
+http.get('/health', (req) => ({
+	status: 'ok',
+	tenantId: req.tenantId,
+	traceId: req.traceId
+}));
+
+// Actions mount directly — the router validates the body and builds the context.
+http.post('/greet', greet);
+
+const port = Number(process.env['PORT'] ?? 3000);
+http.listen(port, () => {
+	console.log(\`${projectName} listening on http://localhost:\${port}\`);
+});
+`,
+		'src/actions/greet.ts': `import { defineAction } from 'intellibiz';
+import { z } from 'zod';
+
+export const GreetInput = z.object({
+	name: z.string().min(1).max(80),
+	enthusiasm: z.number().int().min(0).max(5).default(1)
+});
+
+export const greet = defineAction({
+	input: GreetInput,
+	handler: async (action) => {
+		// \`action.data\` is fully typed from GreetInput.
+		const { name, enthusiasm } = action.data;
+		action.log.info('greet action', { name });
+		return {
+			message: \`Hello, \${name}\${'!'.repeat(enthusiasm)}\`,
+			traceId: action.traceId
+		};
+	}
+});
+`,
+		'README.md': `# ${projectName}
+
+Scaffolded with \`@intellibiz/create-intellibiz\`.
+
+\`\`\`bash
+pnpm install
+pnpm dev
+\`\`\`
+
+- \`GET /\` — service banner
+- \`GET /health\` — health probe with the request trace id
+- \`POST /greet\` — a validated \`defineAction\` handler
+
+\`intellibiz.config.ts\` is validated at boot; a typo stops the process
+instead of surfacing later as a runtime surprise.
+`,
+		'.gitignore': `node_modules
+dist
+.turbo
+.env
+.env.*
+!.env.example
+`,
+		'.env.example': `# Copy to .env and fill in real values.
+PORT=3000
+JWT_SECRET=dev-only-secret-change-me
+`
+	};
+
+	return { dirName, projectName, files };
 }
 
 /** `1700000000000_add-users` — sortable migration file name. */

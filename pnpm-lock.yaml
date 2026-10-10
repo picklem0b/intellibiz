@@ -773,6 +773,13 @@ importers:
         version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.1)(jiti@1.21.7)(tsx@4.23.11))
 
   tools/create-intellibiz:
+    dependencies:
+      '@intellibiz/cli':
+        specifier: workspace:*
+        version: link:../../packages/cli
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

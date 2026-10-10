@@ -1,14 +1,32 @@
 {
-	"name": "create-intellibiz",
-	"version": "1.0.0",
-	"private": true,
+	"name": "@intellibiz/create-intellibiz",
+	"version": "1.18.2",
 	"type": "module",
-	"description": "Scaffold a new Intellibiz application",
+	"private": false,
+	"description": "Scaffold a new Intellibiz application — npm create @intellibiz/intellibiz",
+	"license": "Apache-2.0",
+	"author": "Lethabo Khedama",
+	"homepage": "https://github.com/picklem0b/intellibiz#readme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/picklem0b/intellibiz.git",
+		"directory": "tools/create-intellibiz"
+	},
+	"bugs": {
+		"url": "https://github.com/picklem0b/intellibiz/issues"
+	},
+	"keywords": [
+		"intellibiz",
+		"create",
+		"scaffold",
+		"starter",
+		"template"
+	],
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
 	"bin": {
-		"create-intellibiz": "./dist/index.cjs"
+		"create-intellibiz": "./dist/bin.cjs"
 	},
 	"exports": {
 		".": {
@@ -23,11 +41,23 @@
 		}
 	},
 	"files": ["dist"],
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
-		"build": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022",
-		"dev": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022 --watch",
-		"test": "echo \"no tests yet\"",
+		"build": "tsdown src/index.ts src/bin.ts --format esm,cjs --dts --clean --sourcemap --target es2022",
+		"dev": "tsdown src/index.ts src/bin.ts --format esm,cjs --dts --clean --sourcemap --target es2022 --watch",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit",
+		"lint": "tsc --noEmit",
 		"clean": "rm -rf dist"
+	},
+	"dependencies": {
+		"@intellibiz/cli": "workspace:*",
+		"consola": "^3.4.2"
 	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",

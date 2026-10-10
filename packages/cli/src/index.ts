@@ -1,5 +1,6 @@
 import { defineCommand } from 'citty';
 import { devCommand } from './commands/dev.js';
+import { initCommand } from './commands/init.js';
 import { buildCommand } from './commands/build.js';
 import { auditCommand } from './commands/audit.js';
 import { dashboardCommand } from './commands/dashboard.js';
@@ -20,6 +21,7 @@ export const main = defineCommand({
 		version: '0.1.0'
 	},
 	subCommands: {
+		init: initCommand,
 		dev: devCommand,
 		build: buildCommand,
 		audit: auditCommand,
@@ -30,6 +32,7 @@ export const main = defineCommand({
 	}
 });
 
+export { initCommand } from './commands/init.js';
 export { devCommand } from './commands/dev.js';
 export { buildCommand } from './commands/build.js';
 export { auditCommand } from './commands/audit.js';
@@ -38,3 +41,4 @@ export { generateCommand } from './commands/generate.js';
 export { configCommand } from './commands/config.js';
 export { migrateCommand } from './commands/migrate.js';
 export * from './scaffold.js';
+export * from './project.js';

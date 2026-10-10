@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runCommand } from 'citty';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const calls = {
 	start: [] as string[],
 	info: [] as string[],
 	success: [] as string[],
 	log: [] as string[],
-	box: [] as string[]
+	box: [] as string[],
+	error: [] as string[]
 };
 
 vi.mock('consola', () => ({
@@ -15,11 +19,13 @@ vi.mock('consola', () => ({
 		info: (m: string) => calls.info.push(m),
 		success: (m: string) => calls.success.push(m),
 		log: (m: string) => calls.log.push(m),
-		box: (m: string) => calls.box.push(m)
+		box: (m: string) => calls.box.push(m),
+		error: (m: string) => calls.error.push(m)
 	}
 }));
 
 const { main } = await import('../index.js');
+const { initCommand } = await import('../commands/init.js');
 const { devCommand } = await import('../commands/dev.js');
 const { auditCommand } = await import('../commands/audit.js');
 const { migrateCommand } = await import('../commands/migrate.js');
@@ -32,6 +38,7 @@ beforeEach(() => {
 	calls.success.length = 0;
 	calls.log.length = 0;
 	calls.box.length = 0;
+	calls.error.length = 0;
 });
 
 describe('root command', () => {
@@ -43,6 +50,7 @@ describe('root command', () => {
 			'dashboard',
 			'dev',
 			'generate',
+			'init',
 			'migrate'
 		]);
 	});
@@ -51,6 +59,40 @@ describe('root command', () => {
 		const meta = main.meta as { name?: string; version?: string } | undefined;
 		expect(meta?.name).toBe('intellibiz');
 		expect(meta?.version).toBeTruthy();
+	});
+});
+
+describe('init command', () => {
+	it('writes a runnable project into a new directory', async () => {
+		const cwd = process.cwd();
+		const dir = await mkdtemp(join(tmpdir(), 'intellibiz-init-'));
+		try {
+			process.chdir(dir);
+			await runCommand(initCommand, { rawArgs: ['my-api'] });
+
+			const entry = await readFile(join(dir, 'my-api', 'src/index.ts'), 'utf8');
+			expect(entry).toContain('http.listen(');
+			expect(calls.success.join('\n')).toContain('Created my-api');
+		} finally {
+			process.chdir(cwd);
+			await rm(dir, { recursive: true, force: true });
+		}
+	});
+
+	it('refuses to write into a non-empty directory', async () => {
+		const cwd = process.cwd();
+		const dir = await mkdtemp(join(tmpdir(), 'intellibiz-init-'));
+		try {
+			process.chdir(dir);
+			await runCommand(initCommand, { rawArgs: ['my-api'] });
+			calls.error.length = 0;
+			await runCommand(initCommand, { rawArgs: ['my-api'] });
+			expect(calls.error.join('\n')).toContain('already exists');
+		} finally {
+			process.exitCode = 0;
+			process.chdir(cwd);
+			await rm(dir, { recursive: true, force: true });
+		}
 	});
 });
 
