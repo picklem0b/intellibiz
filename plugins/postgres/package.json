@@ -1,7 +1,7 @@
 {
 	"name": "@intellibiz/plugin-postgres",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Intellibiz plugin — PostgreSQL database driver",
 	"main": "./dist/index.cjs",

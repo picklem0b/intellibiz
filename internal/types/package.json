@@ -1,7 +1,7 @@
 {
 	"name": "@intellibiz/types",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Intellibiz shared internal types",
 	"main": "./dist/index.cjs",

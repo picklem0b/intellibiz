@@ -1,7 +1,7 @@
 {
 	"name": "@intellibiz/logger",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Intellibiz logger — pino-backed context-aware logger",
 	"main": "./dist/index.cjs",

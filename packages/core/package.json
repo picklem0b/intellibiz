@@ -1,9 +1,27 @@
 {
 	"name": "@intellibiz/core",
-	"version": "1.0.0",
+	"version": "1.18.2",
 	"type": "module",
 	"private": false,
 	"description": "Intellibiz kernel — ALS context, defineAction, defineConfig, definePlugin",
+	"license": "Apache-2.0",
+	"author": "Lethabo Khedama",
+	"homepage": "https://github.com/picklem0b/intellibiz#readme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/picklem0b/intellibiz.git",
+		"directory": "packages/core"
+	},
+	"bugs": {
+		"url": "https://github.com/picklem0b/intellibiz/issues"
+	},
+	"keywords": [
+		"intellibiz",
+		"backend",
+		"context",
+		"dependency-injection",
+		"define-action"
+	],
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
@@ -20,6 +38,12 @@
 		}
 	},
 	"files": ["dist", "*.node"],
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022",
 		"dev": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022 --watch",

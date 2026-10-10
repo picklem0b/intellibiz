@@ -1,7 +1,7 @@
 {
 	"name": "@intellibiz/plugin-mysql",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Intellibiz plugin — MySQL database driver",
 	"main": "./dist/index.cjs",

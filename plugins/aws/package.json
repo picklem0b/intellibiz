@@ -1,7 +1,7 @@
 {
 	"name": "@intellibiz/plugin-aws",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Intellibiz plugin — AWS provider",
 	"main": "./dist/index.cjs",

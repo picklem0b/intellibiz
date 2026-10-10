@@ -1,9 +1,28 @@
 {
 	"name": "@intellibiz/commerce",
-	"version": "1.0.0",
+	"version": "1.18.2",
 	"type": "module",
 	"private": false,
 	"description": "Intellibiz commerce — payment providers, WAL transactions, webhook dedup, bank retry state machine",
+	"license": "Apache-2.0",
+	"author": "Lethabo Khedama",
+	"homepage": "https://github.com/picklem0b/intellibiz#readme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/picklem0b/intellibiz.git",
+		"directory": "packages/commerce"
+	},
+	"bugs": {
+		"url": "https://github.com/picklem0b/intellibiz/issues"
+	},
+	"keywords": [
+		"intellibiz",
+		"payments",
+		"stripe",
+		"payfast",
+		"ozow",
+		"webhooks"
+	],
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
@@ -20,6 +39,12 @@
 		}
 	},
 	"files": ["dist"],
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022",
 		"dev": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022 --watch",

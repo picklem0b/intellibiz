@@ -1,9 +1,27 @@
 {
 	"name": "@intellibiz/db",
-	"version": "1.0.0",
+	"version": "1.18.2",
 	"type": "module",
 	"private": false,
 	"description": "Intellibiz database layer — sql tagged templates, Kysely proxy, tenant query planner",
+	"license": "Apache-2.0",
+	"author": "Lethabo Khedama",
+	"homepage": "https://github.com/picklem0b/intellibiz#readme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/picklem0b/intellibiz.git",
+		"directory": "packages/db"
+	},
+	"bugs": {
+		"url": "https://github.com/picklem0b/intellibiz/issues"
+	},
+	"keywords": [
+		"intellibiz",
+		"postgres",
+		"kysely",
+		"multi-tenant",
+		"row-level-security"
+	],
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
@@ -20,6 +38,12 @@
 		}
 	},
 	"files": ["dist"],
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
 		"build": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022",
 		"dev": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --target es2022 --watch",

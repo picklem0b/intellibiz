@@ -1,7 +1,7 @@
 {
 	"name": "@intellibiz/plugin-gcp",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Intellibiz plugin — Google Cloud provider",
 	"main": "./dist/index.cjs",

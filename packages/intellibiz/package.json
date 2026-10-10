@@ -1,9 +1,30 @@
 {
 	"name": "intellibiz",
-	"version": "1.0.0",
+	"version": "1.18.2",
 	"type": "module",
 	"private": false,
-	"description": "Intellibiz — Business Application Engine. The public face of the V1 framework.",
+	"description": "Intellibiz — Business Application Engine. The batteries-included bundle on top of the @intellibiz/* packages.",
+	"license": "Apache-2.0",
+	"author": "Lethabo Khedama",
+	"homepage": "https://github.com/picklem0b/intellibiz#readme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/picklem0b/intellibiz.git",
+		"directory": "packages/intellibiz"
+	},
+	"bugs": {
+		"url": "https://github.com/picklem0b/intellibiz/issues"
+	},
+	"keywords": [
+		"intellibiz",
+		"backend",
+		"commerce",
+		"fintech",
+		"ledger",
+		"multi-tenant",
+		"money",
+		"payments"
+	],
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
@@ -77,12 +98,28 @@
 				"types": "./dist/db.d.cts",
 				"default": "./dist/db.cjs"
 			}
+		},
+		"./testing": {
+			"import": {
+				"types": "./dist/testing.d.mts",
+				"default": "./dist/testing.mjs"
+			},
+			"require": {
+				"types": "./dist/testing.d.cts",
+				"default": "./dist/testing.cjs"
+			}
 		}
 	},
 	"files": ["dist"],
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
-		"build": "tsdown src/index.ts src/config.ts src/commerce.ts src/finance.ts src/identity.ts src/http.ts src/db.ts --format esm,cjs --dts --clean --sourcemap --target es2022",
-		"dev": "tsdown src/index.ts src/config.ts src/commerce.ts src/finance.ts src/identity.ts src/http.ts src/db.ts --format esm,cjs --dts --clean --sourcemap --target es2022 --watch",
+		"build": "tsdown src/index.ts src/config.ts src/commerce.ts src/finance.ts src/identity.ts src/http.ts src/db.ts src/testing.ts --format esm,cjs --dts --clean --sourcemap --target es2022",
+		"dev": "tsdown src/index.ts src/config.ts src/commerce.ts src/finance.ts src/identity.ts src/http.ts src/db.ts src/testing.ts --format esm,cjs --dts --clean --sourcemap --target es2022 --watch",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
 		"lint": "tsc --noEmit",
@@ -94,7 +131,9 @@
 		"@intellibiz/finance": "workspace:*",
 		"@intellibiz/commerce": "workspace:*",
 		"@intellibiz/identity": "workspace:*",
-		"@intellibiz/http": "workspace:*"
+		"@intellibiz/http": "workspace:*",
+		"@intellibiz/testing": "workspace:*",
+		"@intellibiz/cli": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",

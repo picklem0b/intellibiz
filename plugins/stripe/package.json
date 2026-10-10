@@ -1,7 +1,7 @@
 {
 	"name": "@intellibiz/plugin-stripe",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Intellibiz plugin — Stripe payments provider",
 	"main": "./dist/index.cjs",

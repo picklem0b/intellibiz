@@ -1,7 +1,7 @@
 {
 	"name": "@intellibiz/plugin-sqlite",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Intellibiz plugin — SQLite database driver",
 	"main": "./dist/index.cjs",

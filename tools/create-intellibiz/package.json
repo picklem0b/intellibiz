@@ -1,7 +1,7 @@
 {
 	"name": "create-intellibiz",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Scaffold a new Intellibiz application",
 	"main": "./dist/index.cjs",

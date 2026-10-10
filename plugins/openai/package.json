@@ -1,7 +1,7 @@
 {
 	"name": "@intellibiz/plugin-openai",
 	"version": "1.0.0",
-	"private": false,
+	"private": true,
 	"type": "module",
 	"description": "Intellibiz plugin — OpenAI provider",
 	"main": "./dist/index.cjs",

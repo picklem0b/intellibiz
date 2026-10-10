@@ -9,6 +9,7 @@ import * as identityBarrel from '../identity.js';
 import * as httpBarrel from '../http.js';
 import * as dbBarrel from '../db.js';
 import * as configBarrel from '../config.js';
+import * as testingBarrel from '../testing.js';
 
 describe('intellibiz root barrel', () => {
 	it('re-exports the core action API', () => {
@@ -88,5 +89,12 @@ describe('subpath barrels', () => {
 
 	it('./config exposes defineConfig', () => {
 		expect(typeof configBarrel.defineConfig).toBe('function');
+	});
+
+	it('./testing exposes the testing helpers', () => {
+		expect(typeof testingBarrel.withContext).toBe('function');
+		expect(typeof testingBarrel.withTenant).toBe('function');
+		expect(typeof testingBarrel.resetTestState).toBe('function');
+		expect(testingBarrel.mockPayments).toBeDefined();
 	});
 });
