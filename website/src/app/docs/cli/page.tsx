@@ -28,7 +28,7 @@ export default function CliPage() {
 				{[
 					{
 						cmd: 'npx intellibiz init [dir]',
-						desc: 'Scaffold a new project (same templates as npm create)'
+						desc: 'Scaffold a new project — prompts for template, modules and extras (same templates as npm create)'
 					},
 					{
 						cmd: 'npx intellibiz dev',
@@ -77,8 +77,10 @@ export default function CliPage() {
 				Create a project
 			</h2>
 			<p className='mt-2 text-muted-foreground'>
-				<code>init</code> writes a runnable project — a config, a typed action
-				and an HTTP entry point — into a new directory:
+				<code>init</code> writes a runnable project — a validated config, typed
+				actions and an HTTP entry point — into a new directory. With no flags it
+				prompts for a template, the engine modules to enable and optional extras
+				(tests, Docker, CI):
 			</p>
 
 			<CodeBlock
@@ -89,6 +91,25 @@ npx intellibiz init my-shop
 cd my-shop
 pnpm install
 pnpm dev`}
+				language='bash'
+				filename='Terminal'
+			/>
+
+			<p className='mt-4 text-muted-foreground'>
+				Pass any option and it runs without prompting, which is what you want in
+				scripts and CI. The default template is <code>store</code>;{' '}
+				<code>api</code> and <code>minimal</code> are lighter.
+			</p>
+
+			<CodeBlock
+				code={`# Pick a template and modules up front
+npx intellibiz init my-api --template=api --modules=db,identity
+
+# Minimal project, no prompts, no extras
+npx intellibiz init my-service --template=minimal --yes
+
+# Accept the store defaults non-interactively
+npx intellibiz init my-shop --yes`}
 				language='bash'
 				filename='Terminal'
 			/>
