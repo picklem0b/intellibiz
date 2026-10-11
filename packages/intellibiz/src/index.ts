@@ -106,12 +106,20 @@ export type { TaxDestination, TotalInput, TotalResult } from '@intellibiz/financ
 
 // ─── Commerce ─────────────────────────────────────────────────────────────────
 export { commerce } from '@intellibiz/commerce';
+export {
+	StripeProvider,
+	PayFastProvider,
+	OzowProvider
+} from '@intellibiz/commerce';
 export type {
 	TransactionState,
 	TransactionHandle,
 	ChargeParams,
 	ChargeResult,
-	PaymentProvider
+	PaymentProvider,
+	StripeConfig,
+	PayFastConfig,
+	OzowConfig
 } from '@intellibiz/commerce';
 
 // ─── Identity ─────────────────────────────────────────────────────────────────

@@ -59,6 +59,12 @@ describe('intellibiz root barrel', () => {
 		expect(root.db).toBeDefined();
 		expect(typeof root.createTraceId).toBe('function');
 	});
+
+	it('re-exports the payment providers from the metapackage', () => {
+		expect(typeof root.StripeProvider).toBe('function');
+		expect(typeof root.PayFastProvider).toBe('function');
+		expect(typeof root.OzowProvider).toBe('function');
+	});
 });
 
 describe('subpath barrels', () => {
