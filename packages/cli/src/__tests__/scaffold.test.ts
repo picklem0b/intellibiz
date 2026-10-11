@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+	describeScaffoldOptions,
+	optionsFromFlags,
+	resolveScaffoldOptions,
 	scaffoldAction,
 	scaffoldMigration,
 	scaffoldOverride,
 	scaffoldPlugin,
 	scaffoldProject,
+	SCAFFOLD_TEMPLATES,
 	toCamelCase,
 	toKebabCase,
 	toPascalCase
@@ -94,6 +98,66 @@ describe('scaffoldPlugin', () => {
 	});
 });
 
+describe('resolveScaffoldOptions', () => {
+	it('defaults to the store template', () => {
+		const options = resolveScaffoldOptions();
+		expect(options.template).toBe('store');
+		expect(options.modules).toEqual(['commerce', 'finance', 'identity', 'db']);
+		expect(options.tests).toBe(true);
+	});
+
+	it('lets individual options override the preset', () => {
+		const options = resolveScaffoldOptions({
+			template: 'api',
+			modules: ['db'],
+			tests: false
+		});
+		expect(options.modules).toEqual(['db']);
+		expect(options.tests).toBe(false);
+		// Untouched flags still come from the preset.
+		expect(options.docker).toBe(SCAFFOLD_TEMPLATES.api.docker);
+	});
+
+	it('drops unknown modules instead of emitting an invalid config', () => {
+		const options = resolveScaffoldOptions({
+			modules: ['db', 'not-a-module' as never]
+		});
+		expect(options.modules).toEqual(['db']);
+	});
+});
+
+describe('optionsFromFlags', () => {
+	it('parses comma-separated modules and features', () => {
+		const options = optionsFromFlags({
+			template: 'api',
+			modules: 'db, identity',
+			features: 'tests,ci'
+		});
+		expect(options).toEqual({
+			template: 'api',
+			modules: ['db', 'identity'],
+			tests: true,
+			docker: false,
+			ci: true
+		});
+	});
+
+	it('ignores an unknown template', () => {
+		expect(optionsFromFlags({ template: 'nope' }).template).toBeUndefined();
+	});
+});
+
+describe('describeScaffoldOptions', () => {
+	it('summarises the chosen options for the CLI', () => {
+		const summary = describeScaffoldOptions(
+			resolveScaffoldOptions({ template: 'minimal' })
+		);
+		expect(summary).toContain('template: minimal');
+		expect(summary).toContain('modules: none');
+		expect(summary).toContain('features: none');
+	});
+});
+
 describe('scaffoldProject', () => {
 	it('normalises the name into a safe directory and package name', () => {
 		const project = scaffoldProject('My Shop!');
@@ -101,8 +165,8 @@ describe('scaffoldProject', () => {
 		expect(project.projectName).toBe('my-shop');
 	});
 
-	it('returns a complete, runnable file set', () => {
-		const { files } = scaffoldProject('shop');
+	it('returns the minimal file set for the minimal template', () => {
+		const { files } = scaffoldProject('tiny', { template: 'minimal' });
 		expect(Object.keys(files).sort()).toEqual([
 			'.env.example',
 			'.gitignore',
@@ -115,6 +179,43 @@ describe('scaffoldProject', () => {
 		]);
 	});
 
+	it('returns the full store file set by default', () => {
+		const { files } = scaffoldProject('shop');
+		expect(Object.keys(files).sort()).toEqual([
+			'.env.example',
+			'.github/workflows/ci.yml',
+			'.gitignore',
+			'README.md',
+			'docker-compose.yml',
+			'intellibiz.config.ts',
+			'package.json',
+			'src/actions/create-order.ts',
+			'src/actions/greet.ts',
+			'src/actions/quote.ts',
+			'src/actions/whoami.ts',
+			'src/index.ts',
+			'src/payments/dev-provider.ts',
+			'src/payments/register.ts',
+			'src/types.ts',
+			'src/webhooks/payment.ts',
+			'tests/app.test.ts',
+			'tsconfig.json'
+		]);
+	});
+
+	it('omits commerce files when commerce is not selected', () => {
+		const { files } = scaffoldProject('api', {
+			template: 'api',
+			modules: ['db', 'identity']
+		});
+		expect(files['src/actions/create-order.ts']).toBeUndefined();
+		expect(files['src/payments/register.ts']).toBeUndefined();
+		expect(files['src/webhooks/payment.ts']).toBeUndefined();
+		// The quote action follows finance, which is selected nowhere here.
+		expect(files['src/actions/quote.ts']).toBeUndefined();
+		expect(files['src/actions/whoami.ts']).toBeDefined();
+	});
+
 	it('emits a package.json that depends on the engine', () => {
 		const { files } = scaffoldProject('shop');
 		const pkg = JSON.parse(files['package.json'] as string);
@@ -123,13 +224,40 @@ describe('scaffoldProject', () => {
 		expect(pkg.type).toBe('module');
 		expect(pkg.dependencies.intellibiz).toBeDefined();
 		expect(pkg.dependencies.zod).toBeDefined();
+		expect(pkg.devDependencies['@intellibiz/testing']).toBeDefined();
+	});
+
+	it('drops test tooling and the test script when tests are off', () => {
+		const { files } = scaffoldProject('tiny', { template: 'minimal' });
+		const pkg = JSON.parse(files['package.json'] as string);
+		expect(pkg.scripts.test).toBeUndefined();
+		expect(pkg.devDependencies.vitest).toBeUndefined();
+		expect(files['tests/app.test.ts']).toBeUndefined();
+	});
+
+	it('writes the selected modules into the config in a canonical order', () => {
+		const { files } = scaffoldProject('api', {
+			modules: ['identity', 'db']
+		});
+		const config = files['intellibiz.config.ts'] as string;
+		expect(config).toContain("modules: ['identity', 'db']");
+		expect(config).toContain('auth: {');
+		expect(config).not.toContain('commerce:');
 	});
 
 	it('mounts a validated action and starts a server', () => {
 		const { files } = scaffoldProject('shop');
 		expect(files['src/index.ts']).toContain("http.post('/greet', greet)");
+		expect(files['src/index.ts']).toContain("http.post('/orders', createOrder)");
 		expect(files['src/index.ts']).toContain('http.listen(');
 		expect(files['src/actions/greet.ts']).toContain('defineAction({');
+	});
+
+	it('verifies webhook signatures against the raw body', () => {
+		const { files } = scaffoldProject('shop');
+		const webhook = files['src/webhooks/payment.ts'] as string;
+		expect(webhook).toContain('verifyWebhookSignature(req.rawBody');
+		expect(webhook).toContain('commerce.webhooks.process(event)');
 	});
 
 	it('substitutes the project name without leaking template markers', () => {

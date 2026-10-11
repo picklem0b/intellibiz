@@ -7,7 +7,21 @@
  */
 export {
 	scaffoldProject,
-	SCAFFOLD_VERSIONS,
-	type ScaffoldedProject
+	resolveScaffoldOptions,
+	optionsFromFlags,
+	describeScaffoldOptions,
+	isTemplateName,
+	isModuleName,
+	SCAFFOLD_TEMPLATES,
+	TEMPLATE_NAMES,
+	MODULE_NAMES,
+	SCAFFOLD_VERSIONS
+} from '@intellibiz/cli';
+export type {
+	ScaffoldOptions,
+	ScaffoldedProject,
+	TemplateName,
+	ModuleName
 } from '@intellibiz/cli';
 export { isNonEmptyDir, writeProject } from '@intellibiz/cli';
+export { canPrompt, promptScaffoldOptions } from '@intellibiz/cli';

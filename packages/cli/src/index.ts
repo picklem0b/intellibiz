@@ -42,3 +42,4 @@ export { configCommand } from './commands/config.js';
 export { migrateCommand } from './commands/migrate.js';
 export * from './scaffold.js';
 export * from './project.js';
+export * from './prompt.js';
